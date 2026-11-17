@@ -1,4 +1,4 @@
-﻿using System.Windows;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System;
@@ -35,12 +35,12 @@ namespace TDU2_Track_Records
 
             try
             {
+                AppData.Initialize();
                 SaveGameGarageImport.EnsureSchema(TDU2_Track_Records.Properties.Settings.Default.connectionString);
                 EventCatalog.RepairLegacyData(TDU2_Track_Records.Properties.Settings.Default.connectionString);
             }
             catch (Exception ex)
             {
-                StartupUri = null;
                 var errorWindow = new Window
                 {
                     Title = "TDU2 Track Records",
@@ -63,6 +63,9 @@ namespace TDU2_Track_Records
             }
 
             base.OnStartup(e);
+            var mainWindow = new MainWindow();
+            MainWindow = mainWindow;
+            mainWindow.Show();
         }
 
         protected override void OnExit(ExitEventArgs e)

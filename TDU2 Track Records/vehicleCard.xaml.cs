@@ -22,10 +22,20 @@ namespace TDU2_Track_Records
         string conversionAccImage;
         //bool isCalculated = false;
 
+        bool canUpgrade;
+        private readonly int vehicleId;
+        private readonly long? garageVehicleId;
+        private int accelerationUpgrade;
+        private int topSpeedUpgrade;
+        private int brakingUpgrade;
+        private bool upgradeLevelsCameFromSave;
+        private bool previewChanged;
 
-        public vehicleCard(int vehicleId)
+        public vehicleCard(int vehicleId, long? garageVehicleId = null)
         {
             InitializeComponent();
+            this.vehicleId = vehicleId;
+            this.garageVehicleId = garageVehicleId;
             ThemeManager.ApplyScopedControlStyles(this);
             Rect workArea = SystemParameters.WorkArea;
             MaxWidth = Math.Max(MinWidth, workArea.Width - 24);
@@ -41,10 +51,12 @@ namespace TDU2_Track_Records
             VehicleDetails vehicle = GetVehicleDetails(vehicleId);
             if (vehicle != null)
             {
+                int catalogueLevel = ClampUpgradeLevel(ParseUpgradeLevel(vehicle.VehicleLevel));
+                accelerationUpgrade = topSpeedUpgrade = brakingUpgrade = catalogueLevel;
+                LoadGarageUpgradeLevels(vehicleId);
                 this.DataContext = vehicle;
                 UpdateStorageLocationVisibility(vehicle);
                 VehiclerClass.Source = new BitmapImage(new Uri("/Images/carClasses/" + vehicle.VehicleCategory + ".png", UriKind.Relative));
-                VehiclerLevel.Source = new BitmapImage(new Uri($"/Images/vehicleCard/Tune{vehicle.VehicleLevel}.png", UriKind.Relative)); //" + vehicle.VehicleLevel + "
                 AccTimeImage.Source = new BitmapImage(new Uri($"/Images/vehicleCard/acc{conversionAccImage}ph.png", UriKind.Relative));
                 SetEnginePositionVisibility(vehicle.EnginePosition);
                 SetDriveTypeVisibility(vehicle.DriveName);
@@ -132,6 +144,9 @@ namespace TDU2_Track_Records
                     }
                 }
             }
+            if (vehicle == null)
+                return null;
+            canUpgrade = vehicle.CanUpgrade;
 
             // Handle purchase visibility and upgrade availability
             if (!vehicle.IsPurchasable && !vehicle.IsReward)
@@ -242,6 +257,59 @@ namespace TDU2_Track_Records
             Window.GetWindow(this)?.Close();
         }
 
+        private void VehiclerLevel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (canUpgrade == false) { return; }
+            accelerationUpgrade = Math.Min(4, accelerationUpgrade + 1);
+            topSpeedUpgrade = Math.Min(4, topSpeedUpgrade + 1);
+            brakingUpgrade = Math.Min(4, brakingUpgrade + 1);
+            previewChanged = true;
+            UpdateVehicleDetails(vehicleId);
+        }
+
+        private void VehiclerLevel_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            if (canUpgrade == false) { return; }
+            accelerationUpgrade = Math.Max(0, accelerationUpgrade - 1);
+            topSpeedUpgrade = Math.Max(0, topSpeedUpgrade - 1);
+            brakingUpgrade = Math.Max(0, brakingUpgrade - 1);
+            previewChanged = true;
+            UpdateVehicleDetails(vehicleId);
+        }
+
+        private void LoadGarageUpgradeLevels(int expectedVehicleId)
+        {
+            if (!garageVehicleId.HasValue)
+                return;
+            using (var connection = new SQLiteConnection(connectionString))
+            using (var command = new SQLiteCommand(@"
+                SELECT acceleration_upgrade, top_speed_upgrade, braking_upgrade
+                FROM garage_vehicles
+                WHERE id=@GarageId AND vehicle_id=@VehicleId AND is_present=1
+                  AND profile_key=COALESCE((SELECT profile_key FROM save_profiles WHERE is_active=1), '')", connection))
+            {
+                connection.Open();
+                command.Parameters.AddWithValue("@GarageId", garageVehicleId.Value);
+                command.Parameters.AddWithValue("@VehicleId", expectedVehicleId);
+                using (var reader = command.ExecuteReader())
+                {
+                    if (!reader.Read() || reader.IsDBNull(0) || reader.IsDBNull(1) || reader.IsDBNull(2))
+                        return;
+                    accelerationUpgrade = ClampUpgradeLevel(reader.GetInt32(0));
+                    topSpeedUpgrade = ClampUpgradeLevel(reader.GetInt32(1));
+                    brakingUpgrade = ClampUpgradeLevel(reader.GetInt32(2));
+                    upgradeLevelsCameFromSave = true;
+                }
+            }
+        }
+
+        private static int ParseUpgradeLevel(string value)
+        {
+            return int.TryParse(value, out int level) ? level : 0;
+        }
+
+        private static int ClampUpgradeLevel(int level) => Math.Max(0, Math.Min(4, level));
+
         private void UpdateVehicleDetails(int vehicleId)
         {
 
@@ -260,7 +328,8 @@ namespace TDU2_Track_Records
 
                 try
                 {
-                    int upgradeLevel = int.Parse(vehicle.VehicleLevel);
+                    int displayedLevel = Math.Max(accelerationUpgrade, Math.Max(topSpeedUpgrade, brakingUpgrade));
+                    vehicle.VehicleLevel = displayedLevel.ToString();
                     double basePower = Convert.ToDouble(vehicle.PowerBhp);
                     double baseAccel = SI == "Metric" ? Convert.ToDouble(vehicle.Acceleration0To100Kph) : Convert.ToDouble(vehicle.Acceleration0To60Mph);
                     double baseBraking100To0 = Convert.ToDouble(vehicle.Braking100To0);
@@ -273,14 +342,14 @@ namespace TDU2_Track_Records
                     double baseTorque = Convert.ToDouble(vehicle.TorqueNm);
 
                     // Calculate new stats based on upgrade level
-                    double finalStatAcc = Math.Floor(100 - (((baseAccel / statAccFactors[upgradeLevel]) - 2.25) / 9.75 * 100));
-                    double finalStatSpeed = Math.Floor(((baseMaxSpeed * statSpeedFactors[upgradeLevel]) - 70) / 400 * 100);
-                    double finalStatBrake = Math.Floor(100 - (((baseBraking100To0 * statBrakeFactors[upgradeLevel]) - 90) / 80 * 100));
-                    double finalAccel = Math.Round(baseAccel * accelerationFactors[upgradeLevel], 2);
-                    double finalMaxSpeed = Math.Round((baseMaxSpeed * maxSpeedFactors[upgradeLevel]) * conversionSpeedFactor, 0);
-                    double finalWeight = Math.Round((baseWeight * massReductionFactors[upgradeLevel]) * conversionWeightFactor, 0);
-                    double finalPower = Math.Round(basePower * powerFactors[upgradeLevel], 0);
-                    double finalPrice = Math.Round(basePrice * priceIncreaseFactors[upgradeLevel], 0);
+                    double finalStatAcc = Math.Floor(100 - (((baseAccel / statAccFactors[accelerationUpgrade]) - 2.25) / 9.75 * 100));
+                    double finalStatSpeed = Math.Floor(((baseMaxSpeed * statSpeedFactors[topSpeedUpgrade]) - 70) / 400 * 100);
+                    double finalStatBrake = Math.Floor(100 - (((baseBraking100To0 * statBrakeFactors[brakingUpgrade]) - 90) / 80 * 100));
+                    double finalAccel = Math.Round(baseAccel * accelerationFactors[accelerationUpgrade], 2);
+                    double finalMaxSpeed = Math.Round((baseMaxSpeed * maxSpeedFactors[topSpeedUpgrade]) * conversionSpeedFactor, 0);
+                    double finalWeight = Math.Round((baseWeight * massReductionFactors[displayedLevel]) * conversionWeightFactor, 0);
+                    double finalPower = Math.Round(basePower * powerFactors[topSpeedUpgrade], 0);
+                    double finalPrice = Math.Round(basePrice * priceIncreaseFactors[displayedLevel], 0);
                     double finalTorque = Math.Round(baseTorque * conversionTorqueFactor, 0);
                     double finalMassPower = Math.Round(finalWeight / finalPower, 3);
 
@@ -300,6 +369,10 @@ namespace TDU2_Track_Records
                     this.DataContext = vehicle;
                     UpdateStorageLocationVisibility(vehicle);
                     VehiclerLevel.Source = new BitmapImage(new Uri($"/Images/vehicleCard/Tune{vehicle.VehicleLevel}.png", UriKind.Relative));
+                    string upgradeSource = upgradeLevelsCameFromSave && !previewChanged ? "SAVE" : "PREVIEW";
+                    UpgradeBreakdownText.Text = accelerationUpgrade == topSpeedUpgrade && topSpeedUpgrade == brakingUpgrade
+                        ? $"{upgradeSource}: STAGE {displayedLevel} / 4"
+                        : $"{upgradeSource}: A {accelerationUpgrade} · S {topSpeedUpgrade} · B {brakingUpgrade}";
                 }
                 catch (FormatException ex)
                 {

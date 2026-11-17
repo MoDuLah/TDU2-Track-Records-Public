@@ -114,7 +114,8 @@
                     <Grid.Background>
                         <ImageBrush x:Name="VehicleImage" ImageSource="{Binding VehicleImage}" Stretch="UniformToFill" TileMode="None" AlignmentX="Center" AlignmentY="Center"/>
                     </Grid.Background>
-                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                    <StackPanel HorizontalAlignment="Right">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <TextBlock x:Name="VehicleNameTextBlock" Foreground="#fff" FontSize="20" Padding="20" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="5">
                             <TextBlock.Background>
                                 <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
@@ -125,7 +126,39 @@
                             <Run Text="{Binding VehicleName}"/>
                         </TextBlock>
                         <Image x:Name="VehiclerClass" Margin="5"/>
-                        <Image x:Name="VehiclerLevel" Margin="5"/>
+                        <Image x:Name="VehiclerLevel" Margin="5" Cursor="Hand"
+                               MouseLeftButtonDown="VehiclerLevel_MouseLeftButtonDown"
+                               MouseRightButtonDown="VehiclerLevel_MouseRightButtonDown"/>
+                        </StackPanel>
+                        <Border HorizontalAlignment="Right" Margin="5,0,5,5" Padding="8,4"
+                                Background="#E60C0E12" BorderBrush="#FF3B3E45" BorderThickness="1">
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock x:Name="UpgradeBreakdownText" Foreground="#FFFFB4AA" FontSize="12"
+                                           FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                <StackPanel Orientation="Horizontal" ToolTip="Left-click the tune indicator to preview the next upgrade stage">
+                                    <Viewbox Width="18" Height="24" Margin="0,0,4,0">
+                                        <Canvas Width="24" Height="30">
+                                            <Path Data="M12,1 C6,1 2,5 2,11 L2,19 C2,25 6,29 12,29 C18,29 22,25 22,19 L22,11 C22,5 18,1 12,1 Z"
+                                                  Fill="#FF262A30" Stroke="#FFF2F2F4" StrokeThickness="1.5"/>
+                                            <Path Data="M12,2 C6.5,2 3,5.5 3,11 L3,14 L12,14 Z" Fill="#FFE52521"/>
+                                            <Path Data="M12,2 L12,14 M3,14 L21,14" Stroke="#FFF2F2F4" StrokeThickness="1"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="LEFT +1" Foreground="#FFF2F2F4" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" ToolTip="Right-click the tune indicator to preview the previous upgrade stage">
+                                    <Viewbox Width="18" Height="24" Margin="0,0,4,0">
+                                        <Canvas Width="24" Height="30">
+                                            <Path Data="M12,1 C6,1 2,5 2,11 L2,19 C2,25 6,29 12,29 C18,29 22,25 22,19 L22,11 C22,5 18,1 12,1 Z"
+                                                  Fill="#FF262A30" Stroke="#FFF2F2F4" StrokeThickness="1.5"/>
+                                            <Path Data="M12,2 C17.5,2 21,5.5 21,11 L21,14 L12,14 Z" Fill="#FFE52521"/>
+                                            <Path Data="M12,2 L12,14 M3,14 L21,14" Stroke="#FFF2F2F4" StrokeThickness="1"/>
+                                        </Canvas>
+                                    </Viewbox>
+                                    <TextBlock Text="RIGHT −1" Foreground="#FFF2F2F4" FontSize="11" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
                     </StackPanel>
                 </Grid>
             </Border>

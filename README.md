@@ -1,24 +1,30 @@
 # TDU2 Track Records Public
 
-A Windows companion for Test Drive Unlimited 2. Log laps and event results, browse the
-track catalogue, and see your best times in Power Laps. Dealerships and vehicle
-specifications are read-only. The public edition omits Drag Stats, Drag Attempts,
-Brake Attempts, and Vehicle Management.
+A Windows companion for Test Drive Unlimited 2. Log laps and event results, browse
+tracks and dealerships, see your best times in Power Laps, and sync garage mileage
+and objective progress from your game save. The public edition omits Drag Stats,
+Drag Attempts, Brake Attempts, and the Vehicle Management editor.
 
-The included SQLite database starts with the game catalogue and an empty lap history.
-Your results are saved in the `database.db` next to the application.
+## Run the Windows release
 
-## Build
+Extract the complete Windows ZIP to a writable folder and run
+`TDU2 Track Records Public.exe`. Keep the DLLs, the `Decoder` folder, and
+`database.seed.db` with the executable. The app needs .NET Framework 4.8.
+The bundled decoder reads TDU2 saves without modifying them.
 
-1. Install Visual Studio with the **.NET desktop development** workload and the
-   **.NET Framework 4.8 targeting pack**.
-2. Open `TDU2 Track Records.sln` and build the **Release** configuration. Visual Studio
-   restores the SQLite package through NuGet. From a Visual Studio Developer Prompt,
-   you can also run `msbuild "TDU2 Track Records.sln" -restore -p:Configuration=Release`.
-3. Run `TDU2 Track Records Public.exe` from `TDU2 Track Records/bin/Release`. Keep the
-   other files in that folder with the executable and use a folder you can write to.
+The included catalogue starts with no lap records and zero mileage on all 208 cars.
+On first launch the app copies the seed to
+`%LocalAppData%\MoDuLah\TDU2 Track Records\database.db`. Subsequent releases leave
+that database in place. If you already logged laps in public v2.4.0, back up its
+`database.db` from beside the old executable. Before your first 2.5 launch, copy that
+file to the new location if there is no database there. Keep both copies if you
+already have a database at the new location.
 
-Lap and event logging works without a game save. Optional live profile sync requires an
-existing TDU2 SaveGame Editor installation in your Documents folder with its Python
-environment and the Track Records bridge (`tools/track_records_bridge.py`). With a
-compatible save profile, sync can populate your garage and read-only objectives.
+## Build from source
+
+Install Visual Studio with the **.NET desktop development** workload and the
+**.NET Framework 4.8 targeting pack**, plus Python with PyInstaller
+(`python -m pip install pyinstaller`). From PowerShell, run
+`./build_public_release.ps1` to build the decoder and the application and create the
+portable ZIP in `artifacts`. See [third-party notices](THIRD_PARTY_NOTICES.md) for
+the decoder licence.

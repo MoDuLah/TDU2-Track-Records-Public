@@ -15,7 +15,8 @@ namespace TDU2_Track_Records
 
     internal static class SaveObjectiveSync
     {
-        internal const int MappingVersion = 4;
+        internal const int MappingVersion = 9;
+        private const int DisplayedObjectivesViewVersion = 2;
 
         public static void EnsureSchema(SQLiteConnection connection)
         {
@@ -32,21 +33,26 @@ namespace TDU2_Track_Records
                     objective_id INTEGER NOT NULL,
                     completed INTEGER NOT NULL,
                     PRIMARY KEY (profile_key, objective_id)
+                );
+                CREATE TABLE IF NOT EXISTS track_records_schema_state (
+                    schema_key TEXT PRIMARY KEY,
+                    schema_version INTEGER NOT NULL
                 );";
             const string createView = @"
                 CREATE VIEW IF NOT EXISTS displayed_objectives AS
                 SELECT o.id, o.ParentCategory, o.Subcategory, o.Description, o.Island, o.MaximumPoints,
                        CASE WHEN live.earned=1 THEN 'true'
                             WHEN manual.completed IS NOT NULL THEN CASE manual.completed WHEN 1 THEN 'true' ELSE 'false' END
+                             WHEN live.earned=0 THEN 'false'
                             WHEN p.profile_key IS NULL OR (p.uses_legacy_objectives=1 AND live.objective_id IS NULL)
-                            THEN o.Status ELSE 'false' END AS Status,
+                             THEN o.Status ELSE NULL END AS Status,
                        CASE WHEN live.earned=1 THEN o.MaximumPoints
                             WHEN manual.completed=1 THEN o.MaximumPoints
                             WHEN live.points IS NOT NULL THEN live.points
                             WHEN manual.completed=0 THEN 0
                             WHEN p.profile_key IS NULL OR (p.uses_legacy_objectives=1 AND live.objective_id IS NULL)
                             THEN o.Points ELSE 0 END AS Points,
-                       CASE WHEN live.earned=1 THEN 1 ELSE 0 END AS SaveVerified,
+                       CASE WHEN live.objective_id IS NOT NULL THEN 1 ELSE 0 END AS SaveVerified,
                        live.detail AS SaveDetail
                 FROM objectives_list o
                 LEFT JOIN save_profiles p ON p.is_active=1
@@ -57,7 +63,7 @@ namespace TDU2_Track_Records
                 using (var command = new SQLiteCommand(createTable, connection, transaction))
                     command.ExecuteNonQuery();
 
-                bool needsViewUpdate = SaveGameGarageImport.EnsureColumn(
+                bool pointsAdded = SaveGameGarageImport.EnsureColumn(
                     connection, "save_objectives", "points", "INTEGER", transaction);
                 bool migrateLegacy = SaveGameGarageImport.EnsureColumn(
                     connection, "save_profiles", "uses_legacy_objectives", "INTEGER NOT NULL DEFAULT 0", transaction);
@@ -72,16 +78,42 @@ namespace TDU2_Track_Records
                 }
                 SaveGameGarageImport.EnsureColumn(
                     connection, "save_profiles", "objective_mapping_version", "INTEGER", transaction);
+                int viewVersion = 0;
                 using (var command = new SQLiteCommand(
-                    (needsViewUpdate || migrateLegacy ? "DROP VIEW IF EXISTS displayed_objectives;" : "") + createView,
+                    "SELECT schema_version FROM track_records_schema_state WHERE schema_key='displayed_objectives'", connection, transaction))
+                {
+                    object value = command.ExecuteScalar();
+                    if (value != null && value != DBNull.Value)
+                        viewVersion = Convert.ToInt32(value);
+                }
+                bool recreateView = pointsAdded || migrateLegacy || viewVersion != DisplayedObjectivesViewVersion;
+                using (var command = new SQLiteCommand(
+                    (recreateView ? "DROP VIEW IF EXISTS displayed_objectives;" : "") + createView,
                     connection, transaction))
                     command.ExecuteNonQuery();
+                if (recreateView)
+                {
+                    using (var command = new SQLiteCommand(@"
+                        INSERT INTO track_records_schema_state (schema_key, schema_version)
+                        VALUES ('displayed_objectives', @Version)
+                        ON CONFLICT(schema_key) DO UPDATE SET schema_version=excluded.schema_version;", connection, transaction))
+                    {
+                        command.Parameters.AddWithValue("@Version", DisplayedObjectivesViewVersion);
+                        command.ExecuteNonQuery();
+                    }
+                }
                 transaction.Commit();
             }
         }
 
         public static void Apply(SQLiteConnection connection, SQLiteTransaction transaction, GarageBridgeSnapshot snapshot)
         {
+            if (snapshot.objective_progress != null && snapshot.objective_progress.Count > 0)
+            {
+                ApplyDecodedProgress(connection, transaction, snapshot);
+                UpdateProfileObjectiveState(connection, transaction, snapshot);
+                return;
+            }
             if (snapshot.licences == null || snapshot.contest_results == null)
                 return;
 
@@ -221,13 +253,61 @@ namespace TDU2_Track_Records
                 }
             }
 
+            UpdateProfileObjectiveState(connection, transaction, snapshot);
+        }
+
+        private static void ApplyDecodedProgress(SQLiteConnection connection, SQLiteTransaction transaction,
+            GarageBridgeSnapshot snapshot)
+        {
+            using (var clear = new SQLiteCommand(
+                "DELETE FROM save_objectives WHERE profile_key=@Profile", connection, transaction))
+            {
+                clear.Parameters.AddWithValue("@Profile", snapshot.profile_key);
+                clear.ExecuteNonQuery();
+            }
+
+            const string sql = @"
+                INSERT INTO save_objectives (profile_key, objective_id, earned, detail, points)
+                SELECT @Profile, id, @Earned, @Detail,
+                       CASE WHEN @Earned=1 THEN MaximumPoints ELSE @Points END
+                FROM objectives_list WHERE id=@ObjectiveId;";
+            using (var command = new SQLiteCommand(sql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@Profile", snapshot.profile_key);
+                command.Parameters.AddWithValue("@ObjectiveId", 0);
+                command.Parameters.AddWithValue("@Earned", 0);
+                command.Parameters.AddWithValue("@Detail", DBNull.Value);
+                command.Parameters.AddWithValue("@Points", 0);
+                foreach (SaveObjectiveProgress objective in snapshot.objective_progress)
+                {
+                    command.Parameters["@ObjectiveId"].Value = objective.objective_id;
+                    command.Parameters["@Earned"].Value = objective.earned ? 1 : 0;
+                    // Versus Club awards 50 Social points for each race toward the 50-race objective.
+                    command.Parameters["@Points"].Value = objective.objective_id == 134 ? objective.current * 50 : 0;
+                    command.Parameters["@Detail"].Value = (object)objective.detail ?? DBNull.Value;
+                    if (command.ExecuteNonQuery() != 1)
+                        throw new InvalidOperationException(
+                            $"Objective {objective.objective_id} is missing from the Track Records catalogue.");
+                }
+            }
+        }
+
+        private static void UpdateProfileObjectiveState(SQLiteConnection connection, SQLiteTransaction transaction,
+            GarageBridgeSnapshot snapshot)
+        {
             using (var command = new SQLiteCommand(
-                @"UPDATE save_profiles SET objective_source_sha256=@Hash, objective_mapping_version=@Version
+                @"UPDATE save_profiles SET objective_source_sha256=@Hash, objective_mapping_version=@Version,
+                    competition_points=@Competition, collection_points=@Collection,
+                    discovery_points=@Discovery, social_points=@Social
                   WHERE profile_key=@Profile", connection, transaction))
             {
                 command.Parameters.AddWithValue("@Profile", snapshot.profile_key);
                 command.Parameters.AddWithValue("@Hash", snapshot.source.sha256);
                 command.Parameters.AddWithValue("@Version", MappingVersion);
+                command.Parameters.AddWithValue("@Competition", (object)snapshot.competition_points ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Collection", (object)snapshot.collection_points ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Discovery", (object)snapshot.discovery_points ?? DBNull.Value);
+                command.Parameters.AddWithValue("@Social", (object)snapshot.social_points ?? DBNull.Value);
                 command.ExecuteNonQuery();
             }
         }

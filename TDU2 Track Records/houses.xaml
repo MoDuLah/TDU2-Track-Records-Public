@@ -97,10 +97,21 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8" VerticalAlignment="Center">
                     <Menu x:Name="LocationMenus" IsMainMenu="False" Background="Transparent"
                           FontSize="13" VerticalAlignment="Center"/>
-                    <TextBox x:Name="LocationSearchBox" Width="150" Height="34" Padding="10,4" Margin="6,0,0,0"
-                             FontSize="14" VerticalContentAlignment="Center"
-                             ToolTip="Filter owned properties"
-                             AutomationProperties.Name="Filter owned properties"/>
+                    <StackPanel Margin="6,0,0,0">
+                        <TextBlock Text="HOUSE SEARCH" Foreground="#FFAAAEB7" FontSize="10"/>
+                        <TextBox x:Name="LocationSearchBox" Width="150" Height="34" Padding="10,4"
+                                 FontSize="14" VerticalContentAlignment="Center"
+                                 ToolTip="Filter owned properties"
+                                 AutomationProperties.Name="Filter owned properties"/>
+                    </StackPanel>
+                    <StackPanel Margin="12,0,0,0">
+                        <TextBlock Text="VEHICLE / BRAND SEARCH" Foreground="#FFAAAEB7" FontSize="10"/>
+                        <TextBox x:Name="VehicleSearchBox" Width="190" Height="34" Padding="10,4"
+                                 FontSize="14" VerticalContentAlignment="Center"
+                                 TextChanged="VehicleSearchBox_TextChanged"
+                                 ToolTip="Find cars across owned garages by name, brand, or model"
+                                 AutomationProperties.Name="Find cars across owned garages"/>
+                    </StackPanel>
                 </StackPanel>
             </Grid>
 
@@ -163,6 +174,114 @@
                     </Grid.RowDefinitions>
                 </Grid>
             </ScrollViewer>
+
+            <Border x:Name="GarageSearchResultsPanel" Grid.Column="1" Grid.Row="2" Grid.RowSpan="2" Grid.ColumnSpan="2"
+                    Visibility="Collapsed" Margin="0,0,0,0" Background="#F21A1C20"
+                    BorderBrush="#FF3B3E45" BorderThickness="1">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid Margin="14,10,14,8">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <Border Width="5" Background="#FFE52521" Margin="0,0,10,0"/>
+                        <StackPanel Grid.Column="1">
+                            <TextBlock x:Name="GarageSearchHeading" Text="GARAGE SEARCH RESULTS"
+                                       Foreground="#FFF2F2F4" FontSize="19" FontWeight="Bold"/>
+                            <TextBlock Text="Results from every owned garage; select either island menu to return to a house."
+                                       Foreground="#FFAAAEB7" FontSize="12" Margin="0,2,0,0"/>
+                        </StackPanel>
+                    </Grid>
+                    <Grid Grid.Row="1">
+                        <DataGrid x:Name="GarageSearchTable" Margin="12,0,12,12" AutoGenerateColumns="False"
+                                  IsReadOnly="True" CanUserAddRows="False" CanUserDeleteRows="False"
+                                  CanUserReorderColumns="True" CanUserResizeColumns="True" CanUserSortColumns="True"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                  RowHeaderWidth="0" AlternationCount="2" SelectionMode="Single"
+                                  Background="#FF121418" Foreground="#FFF2F2F4"
+                                  BorderBrush="#FF3B3E45" BorderThickness="1">
+                            <DataGrid.Resources>
+                                <Style TargetType="DataGridColumnHeader">
+                                    <Setter Property="Background" Value="#FF25272C"/>
+                                    <Setter Property="Foreground" Value="#FFFFB4AA"/>
+                                    <Setter Property="FontWeight" Value="Bold"/>
+                                    <Setter Property="Padding" Value="9,7"/>
+                                    <Setter Property="BorderBrush" Value="#FF3B3E45"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                </Style>
+                                <Style TargetType="DataGridRow">
+                                    <Setter Property="Background" Value="#FF1A1C20"/>
+                                    <Setter Property="Foreground" Value="#FFF2F2F4"/>
+                                    <Setter Property="MinHeight" Value="74"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="AlternationIndex" Value="1"><Setter Property="Background" Value="#FF202329"/></Trigger>
+                                        <Trigger Property="IsSelected" Value="True"><Setter Property="Background" Value="#FF4A2324"/></Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                                <Style TargetType="DataGridCell">
+                                    <Setter Property="BorderBrush" Value="#FF34373E"/>
+                                    <Setter Property="BorderThickness" Value="0,0,1,1"/>
+                                    <Setter Property="Padding" Value="8,5"/>
+                                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                                    <Setter Property="FocusVisualStyle" Value="{x:Null}"/>
+                                </Style>
+                            </DataGrid.Resources>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="#" Binding="{Binding Number}" Width="44"/>
+                                <DataGridTemplateColumn Header="IMAGE" Width="112">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Button Tag="{Binding}" Click="GarageThumbnail_Click" Padding="0" Margin="0"
+                                                    Background="#FF0C0E12" BorderBrush="#FFE52521" BorderThickness="1"
+                                                    ToolTip="Click to enlarge; click outside the image to close">
+                                                <Image Source="{Binding Thumbnail}" Width="92" Height="56" Stretch="Uniform"/>
+                                            </Button>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="BRAND" Binding="{Binding Brand}" Width="135"/>
+                                <DataGridTextColumn Header="CAR NAME" Binding="{Binding CarName}" Width="2*"/>
+                                <DataGridTextColumn Header="CLASS" Binding="{Binding VehicleClass}" Width="70"/>
+                                <DataGridTemplateColumn Header="UPGRADE STAGE" Width="125">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <StackPanel Orientation="Horizontal" ToolTip="{Binding UpgradeSummary}">
+                                                <Image Source="{Binding UpgradeImage}" Width="48" Height="48" Stretch="Uniform"/>
+                                                <TextBlock Text="{Binding UpgradeSummary}" Foreground="#FFFFB4AA" FontSize="11"
+                                                           VerticalAlignment="Center" Margin="5,0,0,0" TextWrapping="Wrap"/>
+                                            </StackPanel>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
+                                <DataGridTextColumn Header="TOP SPEED" Binding="{Binding TopSpeed}" Width="95"/>
+                                <DataGridTextColumn Header="ACCELERATION" Binding="{Binding Acceleration}" Width="95"/>
+                                <DataGridTextColumn Header="HORSEPOWER" Binding="{Binding Horsepower}" Width="100"/>
+                                <DataGridTextColumn Header="GARAGE" Binding="{Binding Garage}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock x:Name="GarageSearchEmptyText" Text="NO MATCHING CARS IN THE ACTIVE PROFILE"
+                                   Visibility="Collapsed" Foreground="#FFAAAEB7" FontSize="18" FontWeight="Bold"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <Grid x:Name="ImagePreviewOverlay" Grid.Column="1" Grid.Row="1" Grid.RowSpan="3" Grid.ColumnSpan="2"
+                  Visibility="Collapsed" Panel.ZIndex="100" Background="#DD000000"
+                  MouseLeftButtonDown="ImagePreviewOverlay_MouseLeftButtonDown">
+                <Border Background="#FF121418" BorderBrush="#FFE52521" BorderThickness="2" Padding="10"
+                        HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="850" MaxHeight="610"
+                        MouseLeftButtonDown="ExpandedVehicleBorder_MouseLeftButtonDown">
+                    <StackPanel>
+                        <TextBlock x:Name="ExpandedVehicleCaption" Foreground="#FFF2F2F4" FontSize="18"
+                                   FontWeight="Bold" HorizontalAlignment="Center" Margin="4,0,4,8"/>
+                        <Image x:Name="ExpandedVehicleImage" Stretch="Uniform" MaxWidth="820" MaxHeight="550"/>
+                        <TextBlock Text="Click outside the image to close" Foreground="#FFAAAEB7" FontSize="11"
+                                   HorizontalAlignment="Center" Margin="0,8,0,0"/>
+                    </StackPanel>
+                </Border>
+            </Grid>
         </Grid>
     </Border>
 </Window>

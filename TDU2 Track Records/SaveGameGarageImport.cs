@@ -27,6 +27,7 @@ namespace TDU2_Track_Records
         public int garage_slot { get; set; }
         public int garage_capacity { get; set; }
         public double mileage_km { get; set; }
+        public int[] upgrade_levels { get; set; }
     }
 
     internal sealed class SaveHouseReference
@@ -34,6 +35,15 @@ namespace TDU2_Track_Records
         public long hash { get; set; }
         public string island { get; set; }
         public string name { get; set; }
+    }
+
+    internal sealed class SaveObjectiveProgress
+    {
+        public int objective_id { get; set; }
+        public bool earned { get; set; }
+        public int current { get; set; }
+        public int target { get; set; }
+        public string detail { get; set; }
     }
 
     internal sealed class GarageBridgeSnapshot
@@ -52,8 +62,13 @@ namespace TDU2_Track_Records
         public List<long> house_hashes { get; set; }
         public List<SaveHouseReference> house_reference { get; set; }
         public List<int> event_xps { get; set; }
+        public List<SaveObjectiveProgress> objective_progress { get; set; }
         public List<int> roads_unlocked { get; set; }
         public List<int> roads_total { get; set; }
+        public int? competition_points { get; set; }
+        public int? collection_points { get; set; }
+        public int? discovery_points { get; set; }
+        public int? social_points { get; set; }
     }
 
     internal sealed class GarageImportResult
@@ -140,11 +155,18 @@ namespace TDU2_Track_Records
                 EnsureColumn(connection, "save_profiles", "source_available", "INTEGER NOT NULL DEFAULT 1");
                 EnsureColumn(connection, "save_profiles", "last_seen_utc", "TEXT");
                 EnsureColumn(connection, "save_profiles", "objective_source_sha256", "TEXT");
+                EnsureColumn(connection, "save_profiles", "competition_points", "INTEGER");
+                EnsureColumn(connection, "save_profiles", "collection_points", "INTEGER");
+                EnsureColumn(connection, "save_profiles", "discovery_points", "INTEGER");
+                EnsureColumn(connection, "save_profiles", "social_points", "INTEGER");
                 SaveObjectiveSync.EnsureSchema(connection);
                 EnsureColumn(connection, "garage_vehicles", "house_hash", "INTEGER");
                 EnsureColumn(connection, "garage_vehicles", "house_id", "INTEGER");
                 EnsureColumn(connection, "garage_vehicles", "garage_slot", "INTEGER");
                 EnsureColumn(connection, "garage_vehicles", "garage_capacity", "INTEGER");
+                EnsureColumn(connection, "garage_vehicles", "acceleration_upgrade", "INTEGER");
+                EnsureColumn(connection, "garage_vehicles", "top_speed_upgrade", "INTEGER");
+                EnsureColumn(connection, "garage_vehicles", "braking_upgrade", "INTEGER");
 
                 bool hasGarageVehicleId = false;
                 using (var command = new SQLiteCommand("PRAGMA table_info(records)", connection))
@@ -342,6 +364,7 @@ namespace TDU2_Track_Records
                             if (string.Equals(importedHash.ToString(), initialHash, StringComparison.OrdinalIgnoreCase))
                             {
                                 ApplyOwnedHouses(connection, transaction, snapshot);
+                                ApplyGarageUpgrades(connection, transaction, snapshot);
                                 SaveObjectiveSync.Apply(connection, transaction, snapshot);
                                 VerifyUnchanged(selectedPath, initialHash);
                                 transaction.Commit();
@@ -446,6 +469,7 @@ namespace TDU2_Track_Records
                     }
 
                     ApplyOwnedHouses(connection, transaction, snapshot);
+                    ApplyGarageUpgrades(connection, transaction, snapshot);
                     LearnAndApplyHouseMappings(connection, transaction, snapshot);
 
                     foreach (int vehicleId in catalogueIds)
@@ -518,17 +542,16 @@ namespace TDU2_Track_Records
 
         private static GarageBridgeSnapshot ReadLiveSnapshot(string dataPath)
         {
-            string editorRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments), "TDU2 SaveGame Editor");
-            string python = Path.Combine(editorRoot, ".venv", "Scripts", "python.exe");
-            string bridge = Path.Combine(editorRoot, "tools", "track_records_bridge.py");
-            if (!File.Exists(python) || !File.Exists(bridge))
-                throw new FileNotFoundException("TDU2 SaveGame Editor and its .venv are required for direct live-save import.");
+            string decoderRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Decoder");
+            string decoder = Path.Combine(decoderRoot, "TDU2TrackRecords.Decoder.exe");
+            if (!File.Exists(decoder))
+                throw new FileNotFoundException("The bundled Track Records save decoder is missing.", decoder);
 
             var startInfo = new ProcessStartInfo
             {
-                FileName = python,
-                Arguments = Quote(bridge) + " " + Quote(dataPath),
-                WorkingDirectory = editorRoot,
+                FileName = decoder,
+                Arguments = Quote(dataPath),
+                WorkingDirectory = decoderRoot,
                 UseShellExecute = false,
                 CreateNoWindow = true,
                 RedirectStandardOutput = true,
@@ -557,7 +580,7 @@ namespace TDU2_Track_Records
         private static void ValidateSnapshot(GarageBridgeSnapshot snapshot, string selectedPath)
         {
             if (snapshot == null || snapshot.format_version != 1 || snapshot.source == null || snapshot.vehicles == null)
-                throw new InvalidDataException("The SaveGame Editor returned an unsupported import snapshot.");
+                throw new InvalidDataException("The bundled decoder returned an unsupported import snapshot.");
             if (string.IsNullOrWhiteSpace(snapshot.profile_key) || string.IsNullOrWhiteSpace(snapshot.profile))
                 throw new InvalidDataException("The live save has no usable profile identity.");
             if (!string.Equals(Path.GetFullPath(snapshot.source.path), selectedPath, StringComparison.OrdinalIgnoreCase))
@@ -573,6 +596,18 @@ namespace TDU2_Track_Records
                     double.IsNaN(vehicle.mileage_km) || double.IsInfinity(vehicle.mileage_km) || vehicle.mileage_km < 0 ||
                     !ids.Add(vehicle.instance_id))
                     throw new InvalidDataException("The live save contains an invalid or duplicate garage instance.");
+            }
+            if (snapshot.objective_progress != null)
+            {
+                var objectiveIds = new HashSet<int>();
+                foreach (SaveObjectiveProgress objective in snapshot.objective_progress)
+                {
+                    if (objective.objective_id <= 0 || objective.current < 0 || objective.target <= 0 ||
+                        objective.current > objective.target || !objectiveIds.Add(objective.objective_id))
+                        throw new InvalidDataException("The live save contains invalid or duplicate objective progress.");
+                }
+                if (objectiveIds.Count != 286)
+                    throw new InvalidDataException("The bundled decoder did not return the complete objective map.");
             }
         }
 
@@ -691,6 +726,32 @@ namespace TDU2_Track_Records
                 WHERE is_present=1 AND EXISTS (SELECT 1 FROM garage_house_mappings m
                                                WHERE m.house_hash=garage_vehicles.house_hash);", connection, transaction))
                 command.ExecuteNonQuery();
+        }
+
+        private static void ApplyGarageUpgrades(SQLiteConnection connection, SQLiteTransaction transaction,
+            GarageBridgeSnapshot snapshot)
+        {
+            const string sql = @"UPDATE garage_vehicles
+                SET acceleration_upgrade=@Acceleration, top_speed_upgrade=@TopSpeed, braking_upgrade=@Braking
+                WHERE profile_key=@Profile AND instance_id=@Instance AND is_present=1;";
+            using (var command = new SQLiteCommand(sql, connection, transaction))
+            {
+                command.Parameters.AddWithValue("@Profile", snapshot.profile_key);
+                command.Parameters.AddWithValue("@Instance", 0L);
+                command.Parameters.AddWithValue("@Acceleration", DBNull.Value);
+                command.Parameters.AddWithValue("@TopSpeed", DBNull.Value);
+                command.Parameters.AddWithValue("@Braking", DBNull.Value);
+                foreach (var vehicle in snapshot.vehicles)
+                {
+                    int[] levels = vehicle.upgrade_levels;
+                    bool valid = levels != null && levels.Length == 3 && levels.All(level => level >= 0 && level <= 255);
+                    command.Parameters["@Instance"].Value = vehicle.instance_id;
+                    command.Parameters["@Acceleration"].Value = valid ? (object)levels[0] : DBNull.Value;
+                    command.Parameters["@TopSpeed"].Value = valid ? (object)levels[1] : DBNull.Value;
+                    command.Parameters["@Braking"].Value = valid ? (object)levels[2] : DBNull.Value;
+                    command.ExecuteNonQuery();
+                }
+            }
         }
 
         private static void AddProfileParameters(SQLiteCommand command, GarageBridgeSnapshot snapshot, bool activateProfile)

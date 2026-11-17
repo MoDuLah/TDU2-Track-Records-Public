@@ -1,0 +1,380 @@
+{
+  "description": "Event identities and remaining cash rewards matched across two unfinished saves. Cup reward-car slots match DBRewardCar _hashcode in standard DLC2 v031 and installed TDU World databases. Fresh claim state is 0. Game payout after replay is not yet verified.",
+  "events": [
+    {
+      "id": 5496998783814205456,
+      "saved_name": "1:A7",
+      "title": "A7 Championship 1",
+      "remaining_cash_reward": 75000,
+      "challenge_files": [
+        "CHA7A01T",
+        "CHA7A02R",
+        "CHA7A03R",
+        "CHA7A04A",
+        "CHA7A05R",
+        "CHA7A06S"
+      ]
+    },
+    {
+      "id": 5496998783814205457,
+      "saved_name": "2:A7",
+      "title": "A7 Championship 2",
+      "remaining_cash_reward": 100000,
+      "challenge_files": [
+        "CHA7B01T",
+        "CHA7B02R",
+        "CHA7B03A",
+        "CHA7B04R",
+        "CHA7B05R",
+        "CHA7B06R",
+        "CHA7B07T"
+      ]
+    },
+    {
+      "id": 5496998783814205460,
+      "saved_name": "1:B4",
+      "title": "B4 Championship 1",
+      "remaining_cash_reward": 70000,
+      "challenge_files": [
+        "CHB4A01R",
+        "CHB4A02R",
+        "CHB4A03T",
+        "CHB4A04T",
+        "CHB4A05R",
+        "CHB4A06T"
+      ]
+    },
+    {
+      "id": 5496998783814205461,
+      "saved_name": "2:B4",
+      "title": "B4 Championship 2",
+      "remaining_cash_reward": 85000,
+      "challenge_files": [
+        "CHB4B01R",
+        "CHB4B02T",
+        "CHB4B03T",
+        "CHB4B04T",
+        "CHB4B05T",
+        "CHB4B06R"
+      ]
+    },
+    {
+      "id": 5496998783814205462,
+      "saved_name": "1:C4",
+      "title": "C4 Championship 1",
+      "remaining_cash_reward": 50000,
+      "challenge_files": [
+        "CHC4A01T",
+        "CHC4A02R",
+        "CHC4A03R",
+        "CHC4A04R",
+        "CHC4A05S",
+        "CHC4A06T"
+      ]
+    },
+    {
+      "id": 5496998783814205463,
+      "saved_name": "2:C4",
+      "title": "C4 Championship 2",
+      "remaining_cash_reward": 65000,
+      "challenge_files": [
+        "CHC4B01R",
+        "CHC4B02T",
+        "CHC4B03R",
+        "CHC4B04A",
+        "CHC4B05R",
+        "CHC4B06R"
+      ]
+    },
+    {
+      "id": 5496998783814205464,
+      "saved_name": "1:C3",
+      "title": "C3 Championship 1",
+      "remaining_cash_reward": 160000,
+      "challenge_files": [
+        "CHC3A01R",
+        "CHC3A02R",
+        "CHC3A03R",
+        "CHC3A04T",
+        "CHC3A05A",
+        "CHC3A06R"
+      ]
+    },
+    {
+      "id": 5496998783814205465,
+      "saved_name": "2:C3",
+      "title": "C3 Championship 2",
+      "remaining_cash_reward": 210000,
+      "challenge_files": [
+        "CHC3B01R",
+        "CHC3B02T",
+        "CHC3B03R",
+        "CHC3B04T",
+        "CHC3B05R",
+        "CHC3B06S",
+        "CHC3B07A"
+      ]
+    },
+    {
+      "id": 5496998783814205467,
+      "saved_name": "1:A6",
+      "title": "A6 Championship 1",
+      "remaining_cash_reward": 80000,
+      "challenge_files": [
+        "CHA6A01T",
+        "CHA6A02R",
+        "CHA6A03S",
+        "CHA6A04R",
+        "CHA6A05R",
+        "CHA6A06T"
+      ]
+    },
+    {
+      "id": 5496998783814205468,
+      "saved_name": "2:A6",
+      "title": "A6 Championship 2",
+      "remaining_cash_reward": 110000,
+      "challenge_files": [
+        "CHA6B01T",
+        "CHA6B02R",
+        "CHA6B03R",
+        "CHA6B04A",
+        "CHA6B05S",
+        "CHA6B06R"
+      ]
+    },
+    {
+      "id": 5496998783814205469,
+      "saved_name": "1:A5",
+      "title": "A5 Championship 1",
+      "remaining_cash_reward": 150000,
+      "challenge_files": [
+        "CHA5A01R",
+        "CHA5A02S",
+        "CHA5A03A",
+        "CHA5A04R",
+        "CHA5A05R",
+        "CHA5A07T"
+      ]
+    },
+    {
+      "id": 5496998783814205470,
+      "saved_name": "2:A5",
+      "title": "A5 Championship 2",
+      "remaining_cash_reward": 200000,
+      "challenge_files": [
+        "CHA5B01R",
+        "CHA5B02T",
+        "CHA5B03R",
+        "CHA5B04A",
+        "CHA5B05R",
+        "CHA5B06R",
+        "CHA5B07R"
+      ]
+    },
+    {
+      "id": 5496998783814205471,
+      "saved_name": "1:B3",
+      "title": "B3 Championship 1",
+      "remaining_cash_reward": 160000,
+      "challenge_files": [
+        "CHB3A01R",
+        "CHB3A02T",
+        "CHB3A03R",
+        "CHB3A04R",
+        "CHB3A05T",
+        "CHB3A06R"
+      ]
+    },
+    {
+      "id": 5496998783814205472,
+      "saved_name": "2:B3",
+      "title": "B3 Championship 2",
+      "remaining_cash_reward": 210000,
+      "challenge_files": [
+        "CHB3B01R",
+        "CHB3B02T",
+        "CHB3B03R",
+        "CHB3B04R",
+        "CHB3B05T"
+      ]
+    },
+    {
+      "id": 5496998783814205480,
+      "saved_name": "1:A4",
+      "title": "A4 Championship 1",
+      "remaining_cash_reward": 250000,
+      "challenge_files": [
+        "CHA4A01T",
+        "CHA4A02R",
+        "CHA4A05R",
+        "CHA4A06A",
+        "CHA4A07R",
+        "CHA4A03R",
+        "CHA4A08S"
+      ]
+    },
+    {
+      "id": 5496998783814205481,
+      "saved_name": "2:A4",
+      "title": "A4 Championship 2",
+      "remaining_cash_reward": 320000,
+      "challenge_files": [
+        "CHA4B01R",
+        "CHA4B02T",
+        "CHA4B03S",
+        "CHA4B04R",
+        "CHA4B05T",
+        "CHA4B06R",
+        "CHA4B07A",
+        "CHA4B08R"
+      ]
+    },
+    {
+      "id": 5496998783814205482,
+      "saved_name": "1:A3",
+      "title": "A3 Championship 1",
+      "remaining_cash_reward": 350000,
+      "challenge_files": [
+        "CHA3A01R",
+        "CHA3A02T",
+        "CHA3A03T",
+        "CHA3A04R",
+        "CHA3A05R",
+        "CHA3A06S",
+        "CHA3A07A"
+      ]
+    },
+    {
+      "id": 5496998783814205483,
+      "saved_name": "2:A3",
+      "title": "A3 Championship 2",
+      "remaining_cash_reward": 450000,
+      "challenge_files": [
+        "CHA3B01R",
+        "CHA3B02R",
+        "CHA3B03R",
+        "CHA3B06T",
+        "CHA3B05R",
+        "CHA3B04A",
+        "CHA3B07S"
+      ]
+    },
+    {
+      "id": 5496998783814205491,
+      "saved_name": "1:A2",
+      "title": "A2 Championship 1",
+      "remaining_cash_reward": 500000,
+      "challenge_files": [
+        "CHA2A01T",
+        "CHA2A02R",
+        "CHA2A03R",
+        "CHA2A05R",
+        "CHA2A06T",
+        "CHA2A04A",
+        "CHA2A07S"
+      ]
+    },
+    {
+      "id": 5496998783814205492,
+      "saved_name": "2:A2",
+      "title": "A2 Championship 2",
+      "remaining_cash_reward": 650000,
+      "challenge_files": [
+        "CHA2B01A",
+        "CHA2B02R",
+        "CHA2B03R",
+        "CHA2B04T",
+        "CHA2B05R",
+        "CHA2B06R",
+        "CHA2B07R"
+      ]
+    },
+    {
+      "id": 5496998783814205493,
+      "saved_name": "1:A1",
+      "title": "A1 Championship 1",
+      "remaining_cash_reward": 700000,
+      "challenge_files": [
+        "CHA1A01T",
+        "CHA1A02R",
+        "CHA1A03R",
+        "CHA1A04R",
+        "CHA1A05T",
+        "CHA1A06A",
+        "CHA1A08R",
+        "CHA1A07S"
+      ]
+    },
+    {
+      "id": 5496998783814205494,
+      "saved_name": "2:A1",
+      "title": "A1 Championship 2",
+      "remaining_cash_reward": 900000,
+      "challenge_files": [
+        "CHA1B01R",
+        "CHA1B03R",
+        "CHA1B04R",
+        "CHA1B07R",
+        "CHA1B08T",
+        "CHA1B09R",
+        "CHA1B05A",
+        "CHA1B06S"
+      ]
+    },
+    {
+      "id": 5496998783814205513,
+      "saved_name": "1:empty",
+      "title": "Ibiza Cup",
+      "remaining_cash_reward": 1000000,
+      "challenge_files": [
+        "CI1N1B4R",
+        "CI1N2C4A",
+        "CI1N3A7R",
+        "CI1N4B4T",
+        "CI1N5A7T",
+        "CI1N6A6S",
+        "CI1N7C4R",
+        "CI1N8A6T"
+      ],
+      "reward_car_slot": 15,
+      "reward_event": "RACING_CUP_IBIZA1"
+    },
+    {
+      "id": 5496998783814205514,
+      "saved_name": "1:empty",
+      "title": "Hawaii Cup 1",
+      "remaining_cash_reward": 2500000,
+      "challenge_files": [
+        "CH1N1A5T",
+        "CH1N2B3R",
+        "CH1N3A5A",
+        "CH1N4B3T",
+        "CH1N5A5S",
+        "CH1N6A4R",
+        "CH1N7A4R",
+        "CH1N8A4T"
+      ],
+      "reward_car_slot": 16,
+      "reward_event": "RACING_CUP_HAWAI1"
+    },
+    {
+      "id": 5496998783814205515,
+      "saved_name": "2:empty",
+      "title": "Hawaii Cup 2",
+      "remaining_cash_reward": 5000000,
+      "challenge_files": [
+        "CH2N1C3R",
+        "CH2N2A3R",
+        "CH2N3A3A",
+        "CH2N4C3T",
+        "CH2N5A2R",
+        "CH2N6A2S",
+        "CH2N7A1T",
+        "CH2N8A1T"
+      ],
+      "reward_car_slot": 17,
+      "reward_event": "RACING_CUP_HAWAI2"
+    }
+  ]
+}

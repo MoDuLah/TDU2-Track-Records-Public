@@ -91,12 +91,9 @@ namespace TDU2_Track_Records
             {
                 connection.Open();
 
-                // Query to get the maximum points for each subcategory
-                string maxPointsQuery = @"SELECT 
-                                       ParentCategory, 
-                                       SUM(MaximumPoints) AS TotalPoints
-                                       FROM displayed_objectives
-                                       GROUP BY ParentCategory;";
+                // The level table is the game's authority for the main-game category totals.
+                string maxPointsQuery = @"SELECT Category, MAX(PointsNeeded) AS TotalPoints
+                                          FROM objectives_levels GROUP BY Category;";
 
                 using (var command = new SQLiteCommand(maxPointsQuery, connection))
                 {
@@ -163,66 +160,130 @@ namespace TDU2_Track_Records
                     }
                 }
 
-                // Query to get global points
-                string globalMaxPointsQuery = @"SELECT SUM(MaximumPoints) AS TotalPoints FROM displayed_objectives;";
-                using (var command = new SQLiteCommand(globalMaxPointsQuery, connection))
+                // Prefer the exact category totals decoded from PlayerLevels. Fall back to the
+                // checklist totals for profiles imported by an older decoder or for manual mode.
+                using (var command = new SQLiteCommand(@"
+                    SELECT competition_points, social_points, discovery_points, collection_points
+                    FROM save_profiles WHERE is_active=1 LIMIT 1", connection))
+                using (var reader = command.ExecuteReader())
                 {
-                    using (var reader = command.ExecuteReader())
+                    if (reader.Read())
                     {
-                        if (reader.Read())
-                        {
-                            globalMaxPoints = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
-                        }
+                        if (!reader.IsDBNull(0)) competitionCurrentPoints = reader.GetInt32(0);
+                        if (!reader.IsDBNull(1)) socialCurrentPoints = reader.GetInt32(1);
+                        if (!reader.IsDBNull(2)) discoveryCurrentPoints = reader.GetInt32(2);
+                        if (!reader.IsDBNull(3)) collectionCurrentPoints = reader.GetInt32(3);
                     }
                 }
 
-                // Query to get global current points
-                string globalCurrentPointsQuery = @"SELECT SUM(Points) AS TotalPoints FROM displayed_objectives;";
-                using (var command = new SQLiteCommand(globalCurrentPointsQuery, connection))
+                // Casino category levels are added directly to the corresponding TDU2 levels.
+                // The Casino itself explains this rule: every global level earned there is also
+                // earned in TDU2.  Use the active profile's decoded Casino objectives as evidence.
+                var casinoLevels = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
                 {
-                    using (var reader = command.ExecuteReader())
+                    ["Competition"] = 0,
+                    ["Collection"] = 0,
+                    ["Discovery"] = 0,
+                    ["Social"] = 0,
+                };
+                using (var command = new SQLiteCommand(@"
+                    SELECT o.ParentCategory, SUM(CASE WHEN s.earned=1 THEN o.MaximumPoints ELSE 0 END)
+                    FROM save_profiles p
+                    JOIN save_objectives s ON s.profile_key=p.profile_key
+                    JOIN objectives_list o ON o.id=s.objective_id
+                    WHERE p.is_active=1 AND o.id>=142
+                    GROUP BY o.ParentCategory", connection))
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
                     {
-                        if (reader.Read())
-                        {
-                            globalCurrentPoints = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
-                        }
+                        string casinoCategory = reader.GetString(0);
+                        int casinoPoints = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                        casinoLevels[casinoCategory] = GetCasinoLevel(casinoCategory, casinoPoints);
                     }
                 }
+
+                // Query to get global points
+                globalMaxPoints = competitionMaxPoints + socialMaxPoints + discoveryMaxPoints + collectionMaxPoints;
+                globalCurrentPoints = competitionCurrentPoints + socialCurrentPoints + discoveryCurrentPoints + collectionCurrentPoints;
 
                 // Competition Category
-                competitionProgress.Progress = competitionMaxPoints > 0 ? Math.Round((competitionCurrentPoints * 100.0 / competitionMaxPoints), 0) : 0;
-                var (competitionLevel, competitionTitle) = GetLevelAndTitle(competitionCurrentPoints, "Competition");
+                var (competitionBaseLevel, _) = GetLevelAndTitle(competitionCurrentPoints, "Competition");
                 int competitionMaxLevel = GetMaxLevel("Competition");
-                CompetitionTitle.Text = competitionTitle;
+                int competitionLevel = Math.Min(competitionMaxLevel, competitionBaseLevel + casinoLevels["Competition"]);
+                competitionProgress.Progress = LevelProgress(competitionLevel, competitionMaxLevel);
+                CompetitionTitle.Text = GetTitleForLevel(competitionLevel, "Competition");
                 CompetitionLevel.Text = $"{competitionLevel}/{competitionMaxLevel}";
 
                 // Social Category
-                socialProgress.Progress = socialMaxPoints > 0 ? Math.Round((socialCurrentPoints * 100.0 / socialMaxPoints), 0) : 0;
-                var (socialLevel, socialTitle) = GetLevelAndTitle(socialCurrentPoints, "Social");
+                var (socialBaseLevel, _) = GetLevelAndTitle(socialCurrentPoints, "Social");
                 int socialMaxLevel = GetMaxLevel("Social");
-                SocialTitle.Text = socialTitle;
+                int socialLevel = Math.Min(socialMaxLevel, socialBaseLevel + casinoLevels["Social"]);
+                socialProgress.Progress = LevelProgress(socialLevel, socialMaxLevel);
+                SocialTitle.Text = GetTitleForLevel(socialLevel, "Social");
                 SocialLevel.Text = $"{socialLevel}/{socialMaxLevel}";
 
                 // Discovery Category
-                discoveryProgress.Progress = discoveryMaxPoints > 0 ? Math.Round((discoveryCurrentPoints * 100.0 / discoveryMaxPoints), 0) : 0;
-                var (discoveryLevel, discoveryTitle) = GetLevelAndTitle(discoveryCurrentPoints, "Discovery");
+                var (discoveryBaseLevel, _) = GetLevelAndTitle(discoveryCurrentPoints, "Discovery");
                 int discoveryMaxLevel = GetMaxLevel("Discovery");
-                DiscoveryTitle.Text = discoveryTitle;
+                int discoveryLevel = Math.Min(discoveryMaxLevel, discoveryBaseLevel + casinoLevels["Discovery"]);
+                discoveryProgress.Progress = LevelProgress(discoveryLevel, discoveryMaxLevel);
+                DiscoveryTitle.Text = GetTitleForLevel(discoveryLevel, "Discovery");
                 DiscoveryLevel.Text = $"{discoveryLevel}/{discoveryMaxLevel}";
 
                 // Collection Category
-                collectionProgress.Progress = collectionMaxPoints > 0 ? Math.Round((collectionCurrentPoints * 100.0 / collectionMaxPoints), 0) : 0;
-                var (collectionLevel, collectionTitle) = GetLevelAndTitle(collectionCurrentPoints, "Collection");
+                var (collectionBaseLevel, _) = GetLevelAndTitle(collectionCurrentPoints, "Collection");
                 int collectionMaxLevel = GetMaxLevel("Collection");
-                CollectionTitle.Text = collectionTitle;
+                int collectionLevel = Math.Min(collectionMaxLevel, collectionBaseLevel + casinoLevels["Collection"]);
+                collectionProgress.Progress = LevelProgress(collectionLevel, collectionMaxLevel);
+                CollectionTitle.Text = GetTitleForLevel(collectionLevel, "Collection");
                 CollectionLevel.Text = $"{collectionLevel}/{collectionMaxLevel}";
                 
                 // Global Category
-                globalLevelProgress.Progress = globalMaxPoints > 0 ? Math.Round((globalCurrentPoints * 100.0 / globalMaxPoints), 0) : 0;
                 int globalLevel = collectionLevel+discoveryLevel+socialLevel+competitionLevel;
                 int globalMaxlevel = GetMaxLevel("Competition") + GetMaxLevel("Social") + GetMaxLevel("Collection") + GetMaxLevel("Discovery");
+                globalLevelProgress.Progress = LevelProgress(globalLevel, globalMaxlevel);
                 //GlobalTitle.Text = globalTitle;
                 GlobalLevel.Text = $"{globalLevel}/{globalMaxlevel}";
+            }
+        }
+
+        private static double LevelProgress(int level, int maximumLevel) =>
+            maximumLevel > 0 ? Math.Round(level * 100.0 / maximumLevel, 0) : 0;
+
+        private static int GetCasinoLevel(string category, int points)
+        {
+            switch (category)
+            {
+                case "Competition":
+                    if (points >= 4000) return 4;
+                    if (points >= 2500) return 3;
+                    if (points >= 1000) return 2;
+                    return points >= 450 ? 1 : 0;
+                case "Collection":
+                    return points >= 1000 ? 2 : points >= 350 ? 1 : 0;
+                case "Discovery":
+                case "Social":
+                    return points >= 1000 ? 2 : points >= 300 ? 1 : 0;
+                default:
+                    return 0;
+            }
+        }
+
+        private string GetTitleForLevel(int level, string category)
+        {
+            using (var connection = new SQLiteConnection(connectionString))
+            {
+                connection.Open();
+                using (var command = new SQLiteCommand(@"
+                    SELECT Title FROM objectives_levels
+                    WHERE Category=@Category AND Level=@Level LIMIT 1", connection))
+                {
+                    command.Parameters.AddWithValue("@Category", category);
+                    command.Parameters.AddWithValue("@Level", level);
+                    object title = command.ExecuteScalar();
+                    return title == null || title == DBNull.Value ? "Unknown" : Convert.ToString(title);
+                }
             }
         }
         private (int currentLevel, string title) GetLevelAndTitle(int currentPoints, string category)
@@ -515,8 +576,11 @@ namespace TDU2_Track_Records
                     {
                         while (reader.Read())
                         {
+                            bool? completion = reader.IsDBNull(0)
+                                ? (bool?)null
+                                : Convert.ToBoolean(reader.GetString(0));
                             var objectiveCard = CreateObjectiveCard(
-                                !reader.IsDBNull(0) && Convert.ToBoolean(reader.GetString(0)),
+                                completion,
                                 reader.IsDBNull(1) ? "" : reader.GetString(1),
                                 reader.IsDBNull(2) ? "" : reader.GetString(2),
                                 reader.GetInt32(3), reader.GetInt32(4), reader.GetInt32(5) == 1,
@@ -528,7 +592,7 @@ namespace TDU2_Track_Records
                 }
             }
         }
-        private UIElement CreateObjectiveCard(bool completed, string description, string island,
+        private UIElement CreateObjectiveCard(bool? completed, string description, string island,
             int currentPoints, int maximumPoints, bool saveVerified, string saveDetail)
         {
             var card = new Border
@@ -547,9 +611,12 @@ namespace TDU2_Track_Records
             {
                 Margin = new Thickness(5),
                 IsChecked = completed,
+                IsThreeState = true,
                 IsEnabled = false,
                 Focusable = false,
-                ToolTip = saveVerified ? "Completion recorded in the active save profile." : null
+                ToolTip = saveVerified
+                    ? "Status decoded from the active save profile."
+                    : completed.HasValue ? null : "This objective is not decoded from the save yet; its state is unknown."
             };
             ToolTipService.SetShowOnDisabled(statusCheckBox, true);
             stackPanel.Children.Add(statusCheckBox);
@@ -663,7 +730,7 @@ namespace TDU2_Track_Records
         {
             // Query to check if all objectives in the subcategory are complete
             string query = @"SELECT COUNT(*) FROM displayed_objectives
-                     WHERE Subcategory = @Subcategory AND Status = 'false'";
+                     WHERE Subcategory = @Subcategory AND (Status IS NULL OR Status <> 'true')";
 
             using (var connection = new SQLiteConnection(connectionString))
             {

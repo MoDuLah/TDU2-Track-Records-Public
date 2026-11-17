@@ -4,6 +4,11 @@ namespace TDU2_Track_Records
 {
     public class VehicleDetails
     {
+        public long? GarageVehicleId { get; set; }
+        public int? AccelerationUpgrade { get; set; }
+        public int? TopSpeedUpgrade { get; set; }
+        public int? BrakingUpgrade { get; set; }
+        public string VehicleUpgradeSummary { get; set; }
         public int id { get; set; }
         public string VehicleName { get; set; }
         public string VehicleBrand { get; set; }

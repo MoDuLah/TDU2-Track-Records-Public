@@ -8,6 +8,7 @@ using TDU2_Track_Records.Properties;
 using System.Windows.Input;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using TDU2_Track_Records.Classes;
 
 namespace TDU2_Track_Records
@@ -23,6 +24,12 @@ namespace TDU2_Track_Records
         private static double lastcardLeft;
         private static double lastcardTop;
         private readonly LocationMenu locationMenu;
+        private bool updatingVehicleFilters;
+
+        private sealed class DealerSlot
+        {
+            public VehicleDetails Vehicle { get; set; }
+        }
 
         public dealerships()
         {
@@ -100,29 +107,87 @@ namespace TDU2_Track_Records
                                 DealershipImage.Source = fallbackImage;
                             }
 
-                            // Loop through all 20 slots
+                            var dealerSlots = new List<DealerSlot>();
+                            // Read the showroom once, then apply the optional brand/model filters.
                             for (int i = 1; i <= SelectedMaxSlots; i++) // Increased from 8 to 20 slots
                             {
                                 string slotColumn = $"Slot{i}_VehicleId";
                                 string vehicleId = reader[slotColumn]?.ToString();
-
-                                if (!string.IsNullOrEmpty(vehicleId))
+                                dealerSlots.Add(new DealerSlot
                                 {
-                                    // Load the vehicle details for non-empty slots
-                                    var vehicle = GetVehicleDetails(vehicleId);
-                                    if (vehicle != null)
-                                    {
-                                        AddVehicleToUI(vehicle, slotIndex);
-                                    }
-                                }
-
-                                // Increment the slotIndex to ensure proper positioning in the grid
-                                slotIndex++;
+                                    Vehicle = string.IsNullOrEmpty(vehicleId) ? null : GetVehicleDetails(vehicleId)
+                                });
                             }
+
+                            UpdateVehicleFilters(dealerSlots);
+                            bool filtering = IsVehicleFilterActive();
+                            int visibleCount = 0;
+                            foreach (DealerSlot dealerSlot in dealerSlots)
+                            {
+                                if (dealerSlot.Vehicle == null)
+                                {
+                                    continue;
+                                }
+                                if (!MatchesVehicleFilters(dealerSlot.Vehicle))
+                                    continue;
+                                AddVehicleToUI(dealerSlot.Vehicle, slotIndex++);
+                                visibleCount++;
+                            }
+                            DealershipStockText.Text = filtering ? $"{visibleCount} / {inStockCount} CARS" : $"{inStockCount} CARS";
                         }
                     }
                 }
             }
+        }
+
+        private bool IsVehicleFilterActive()
+        {
+            return BrandFilterComboBox.SelectedIndex > 0 || ModelFilterComboBox.SelectedIndex > 0;
+        }
+
+        private bool MatchesVehicleFilters(VehicleDetails vehicle)
+        {
+            string brand = BrandFilterComboBox.SelectedIndex > 0 ? BrandFilterComboBox.SelectedItem as string : null;
+            string model = ModelFilterComboBox.SelectedIndex > 0 ? ModelFilterComboBox.SelectedItem as string : null;
+            return (brand == null || string.Equals(vehicle.VehicleBrand, brand, StringComparison.OrdinalIgnoreCase)) &&
+                   (model == null || string.Equals(vehicle.VehicleModel, model, StringComparison.OrdinalIgnoreCase));
+        }
+
+        private void UpdateVehicleFilters(IEnumerable<DealerSlot> dealerSlots)
+        {
+            string selectedBrand = BrandFilterComboBox.SelectedIndex > 0 ? BrandFilterComboBox.SelectedItem as string : null;
+            string selectedModel = ModelFilterComboBox.SelectedIndex > 0 ? ModelFilterComboBox.SelectedItem as string : null;
+            var vehicles = new List<VehicleDetails>();
+            foreach (DealerSlot slot in dealerSlots)
+                if (slot.Vehicle != null)
+                    vehicles.Add(slot.Vehicle);
+
+            var brands = new List<string> { "All brands" };
+            brands.AddRange(vehicles.ConvertAll(vehicle => vehicle.VehicleBrand)
+                .FindAll(value => !string.IsNullOrWhiteSpace(value))
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value));
+
+            updatingVehicleFilters = true;
+            BrandFilterComboBox.ItemsSource = brands;
+            BrandFilterComboBox.SelectedItem = selectedBrand != null && brands.Contains(selectedBrand) ? selectedBrand : brands[0];
+
+            string activeBrand = BrandFilterComboBox.SelectedIndex > 0 ? BrandFilterComboBox.SelectedItem as string : null;
+            var models = new List<string> { "All models" };
+            models.AddRange(vehicles
+                .FindAll(vehicle => activeBrand == null || string.Equals(vehicle.VehicleBrand, activeBrand, StringComparison.OrdinalIgnoreCase))
+                .ConvertAll(vehicle => vehicle.VehicleModel)
+                .FindAll(value => !string.IsNullOrWhiteSpace(value))
+                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value));
+            ModelFilterComboBox.ItemsSource = models;
+            ModelFilterComboBox.SelectedItem = selectedModel != null && models.Contains(selectedModel) ? selectedModel : models[0];
+            updatingVehicleFilters = false;
+        }
+
+        private void VehicleFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (updatingVehicleFilters || locationMenu?.Selected == null)
+                return;
+            LoadVehicles(locationMenu.Selected.Name);
         }
 
 
@@ -151,6 +216,8 @@ namespace TDU2_Track_Records
                             {
                                 id = Convert.ToInt32(reader["id"]),
                                 VehicleName = reader["_vehicle_name"].ToString(),
+                                VehicleBrand = reader["_brand_name"].ToString(),
+                                VehicleModel = reader["_modelfull_name"].ToString(),
                                 VehiclePrice = reader["_price"].ToString(),
                                 VehicleCategory = reader["_vehiclecategory_name"].ToString(),
                                 VehicleLevel = reader["_upgrade_level"].ToString(),
@@ -359,7 +426,7 @@ namespace TDU2_Track_Records
 
 
                 vehicleWindow.Closed += cardWindow_Closed;
-                vehicleWindow.ShowDialog();
+                vehicleWindow.Show();
                 }
             }
         }

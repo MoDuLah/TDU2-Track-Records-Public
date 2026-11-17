@@ -123,6 +123,23 @@
                     <StackPanel Grid.Column="1" Margin="14,8" VerticalAlignment="Center">
                         <TextBlock x:Name="DealershipTitleText" Foreground="#FFF2F2F4" FontSize="22" FontWeight="Bold" TextWrapping="Wrap"/>
                         <TextBlock x:Name="DealershipSubtitleText" Foreground="#FFAAAEB7" FontSize="14" Margin="0,5,0,0" TextWrapping="Wrap"/>
+                        <Expander Header="VEHICLE SEARCH" IsExpanded="False" Margin="0,8,0,0"
+                                  Foreground="#FFF2F2F4" AutomationProperties.Name="Vehicle search filters">
+                            <StackPanel Orientation="Horizontal" Margin="0,6,0,0">
+                                <StackPanel Margin="0,0,12,0">
+                                    <TextBlock Text="BRAND" Foreground="#FFAAAEB7" FontSize="11"/>
+                                    <ComboBox x:Name="BrandFilterComboBox" Width="190" Height="32" FontSize="14"
+                                              SelectionChanged="VehicleFilter_SelectionChanged"
+                                              AutomationProperties.Name="Filter vehicles by brand"/>
+                                </StackPanel>
+                                <StackPanel>
+                                    <TextBlock Text="MODEL" Foreground="#FFAAAEB7" FontSize="11"/>
+                                    <ComboBox x:Name="ModelFilterComboBox" Width="240" Height="32" FontSize="14"
+                                              SelectionChanged="VehicleFilter_SelectionChanged"
+                                              AutomationProperties.Name="Filter vehicles by model"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Expander>
                     </StackPanel>
                     <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center" Margin="12">
                         <Border Padding="12,8" Background="#FF0C0E12" BorderBrush="#FF3B3E45" BorderThickness="1" Margin="3">

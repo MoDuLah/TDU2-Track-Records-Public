@@ -81,6 +81,18 @@ namespace TDU2_Track_Records
                 Select(first);
         }
 
+        public void ClearSelection()
+        {
+            Selected = null;
+            foreach (var region in regions)
+            {
+                region.Value.Tag = false;
+                foreach (MenuItem option in region.Value.Items)
+                    option.IsChecked = false;
+            }
+            showLocation(null);
+        }
+
         public bool ReplaceLocations(List<Location> newLocations)
         {
             Location previous = Selected;
