@@ -1,0 +1,706 @@
+using System;
+using System.Collections.Generic;
+using System.Data.SQLite;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Media.Imaging;
+using System.Windows.Media;
+using TDU2_Track_Records.Properties;
+using System.Windows.Controls.Primitives;
+
+namespace TDU2_Track_Records
+{
+    public partial class ObjectivesWindow : Window
+    {
+        // Initialize variables to hold points
+        public int competitionMaxPoints = 0, socialMaxPoints = 0, discoveryMaxPoints = 0, collectionMaxPoints = 0;
+        public int competitionCurrentPoints = 0, socialCurrentPoints = 0, discoveryCurrentPoints = 0, collectionCurrentPoints = 0;
+        public int globalMaxPoints = 0, globalCurrentPoints = 0;
+        // Dictionary to hold category progress (category => (currentPoints, maxPoints))
+        public Dictionary<string, (int currentPoints, int maxPoints)> categoryProgress = new Dictionary<string, (int currentPoints, int maxPoints)>();
+
+        // Dictionary to hold subcategory progress (subcategory => (currentPoints, maxPoints))
+        public Dictionary<string, (int currentPoints, int maxPoints)> subcategoryProgress = new Dictionary<string, (int currentPoints, int maxPoints)>();
+
+        readonly string connectionString = Settings.Default.connectionString;
+        public string category, subcategory;
+        private string selectedObjectiveCategory, selectedObjectiveGroup;
+
+        public ObjectivesWindow()
+        {
+            InitializeComponent();
+            LoadProgressFromDatabase();
+            LoadSubCategories(Tab1.Text, Tab1Type.Text, Tab1SubCategoryGrid);
+            LoadSubCategories(Tab2.Text, Tab2Type.Text, Tab2SubCategoryGrid);
+            LoadSubCategories(Tab3.Text, Tab3Type.Text, Tab3SubCategoryGrid);
+            LoadSubCategories(Tab4.Text, Tab4Type.Text, Tab4SubCategoryGrid);
+            LoadSubCategories(Tab5.Text, Tab5Type.Text, Tab5SubCategoryGrid);
+            LoadSubCategories(Tab6.Text, Tab6Type.Text, Tab6SubCategoryGrid);
+            LoadSubCategories(Tab7.Text, Tab7Type.Text, Tab7SubCategoryGrid);
+            LoadSubCategories(Tab8.Text, Tab8Type.Text, Tab8SubCategoryGrid);
+            UpdatePointsAndRecalculateProgress();
+        }
+
+        private void LoadPointsIntoDictionaries()
+        {
+            using (var connection = new SQLiteConnection(connectionString))
+            {
+                connection.Open();
+
+                // Populate categoryProgress dictionary
+                string categoryQuery = @"SELECT ParentCategory, SUM(Points) AS CurrentPoints, SUM(MaximumPoints) AS MaxPoints 
+                                 FROM displayed_objectives
+                                 GROUP BY ParentCategory;";
+                using (var command = new SQLiteCommand(categoryQuery, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string category = reader.GetString(0);
+                            int currentPoints = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                            int maxPoints = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                            categoryProgress[category] = (currentPoints, maxPoints);
+                        }
+                    }
+                }
+
+                // Populate subcategoryProgress dictionary
+                string subcategoryQuery = @"SELECT Subcategory, SUM(Points) AS CurrentPoints, SUM(MaximumPoints) AS MaxPoints 
+                                    FROM displayed_objectives
+                                    GROUP BY Subcategory;";
+                using (var command = new SQLiteCommand(subcategoryQuery, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string subcategory = reader.GetString(0);
+                            int currentPoints = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+                            int maxPoints = reader.IsDBNull(2) ? 0 : reader.GetInt32(2);
+                            subcategoryProgress[subcategory] = (currentPoints, maxPoints);
+                        }
+                    }
+                }
+            }
+        }
+        private void LoadProgressFromDatabase()
+        {
+
+            using (var connection = new SQLiteConnection(connectionString))
+            {
+                connection.Open();
+
+                // Query to get the maximum points for each subcategory
+                string maxPointsQuery = @"SELECT 
+                                       ParentCategory, 
+                                       SUM(MaximumPoints) AS TotalPoints
+                                       FROM displayed_objectives
+                                       GROUP BY ParentCategory;";
+
+                using (var command = new SQLiteCommand(maxPointsQuery, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string parentCategory = reader.GetString(0);
+                            int totalPoints = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+
+                            // Assign the total points based on the parent category
+                            switch (parentCategory)
+                            {
+                                case "Competition":
+                                    competitionMaxPoints = totalPoints;
+                                    break;
+                                case "Social":
+                                    socialMaxPoints = totalPoints;
+                                    break;
+                                case "Discovery":
+                                    discoveryMaxPoints = totalPoints;
+                                    break;
+                                case "Collection":
+                                    collectionMaxPoints = totalPoints;
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                // Query to get the current points for each subcategory
+                string currentPointsQuery = @"SELECT 
+                                       ParentCategory, 
+                                       SUM(Points) AS TotalPoints
+                                       FROM displayed_objectives
+                                       GROUP BY ParentCategory";
+
+                using (var command = new SQLiteCommand(currentPointsQuery, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string parentCategory = reader.GetString(0);
+                            int points = reader.IsDBNull(1) ? 0 : reader.GetInt32(1);
+
+                            // Assign the current points based on the parent category
+                            switch (parentCategory)
+                            {
+                                case "Competition":
+                                    competitionCurrentPoints = points;
+                                    break;
+                                case "Social":
+                                    socialCurrentPoints = points;
+                                    break;
+                                case "Discovery":
+                                    discoveryCurrentPoints = points;
+                                    break;
+                                case "Collection":
+                                    collectionCurrentPoints = points;
+                                    break;
+                            }
+                        }
+                    }
+                }
+
+                // Query to get global points
+                string globalMaxPointsQuery = @"SELECT SUM(MaximumPoints) AS TotalPoints FROM displayed_objectives;";
+                using (var command = new SQLiteCommand(globalMaxPointsQuery, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            globalMaxPoints = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                        }
+                    }
+                }
+
+                // Query to get global current points
+                string globalCurrentPointsQuery = @"SELECT SUM(Points) AS TotalPoints FROM displayed_objectives;";
+                using (var command = new SQLiteCommand(globalCurrentPointsQuery, connection))
+                {
+                    using (var reader = command.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            globalCurrentPoints = reader.IsDBNull(0) ? 0 : reader.GetInt32(0);
+                        }
+                    }
+                }
+
+                // Competition Category
+                competitionProgress.Progress = competitionMaxPoints > 0 ? Math.Round((competitionCurrentPoints * 100.0 / competitionMaxPoints), 0) : 0;
+                var (competitionLevel, competitionTitle) = GetLevelAndTitle(competitionCurrentPoints, "Competition");
+                int competitionMaxLevel = GetMaxLevel("Competition");
+                CompetitionTitle.Text = competitionTitle;
+                CompetitionLevel.Text = $"{competitionLevel}/{competitionMaxLevel}";
+
+                // Social Category
+                socialProgress.Progress = socialMaxPoints > 0 ? Math.Round((socialCurrentPoints * 100.0 / socialMaxPoints), 0) : 0;
+                var (socialLevel, socialTitle) = GetLevelAndTitle(socialCurrentPoints, "Social");
+                int socialMaxLevel = GetMaxLevel("Social");
+                SocialTitle.Text = socialTitle;
+                SocialLevel.Text = $"{socialLevel}/{socialMaxLevel}";
+
+                // Discovery Category
+                discoveryProgress.Progress = discoveryMaxPoints > 0 ? Math.Round((discoveryCurrentPoints * 100.0 / discoveryMaxPoints), 0) : 0;
+                var (discoveryLevel, discoveryTitle) = GetLevelAndTitle(discoveryCurrentPoints, "Discovery");
+                int discoveryMaxLevel = GetMaxLevel("Discovery");
+                DiscoveryTitle.Text = discoveryTitle;
+                DiscoveryLevel.Text = $"{discoveryLevel}/{discoveryMaxLevel}";
+
+                // Collection Category
+                collectionProgress.Progress = collectionMaxPoints > 0 ? Math.Round((collectionCurrentPoints * 100.0 / collectionMaxPoints), 0) : 0;
+                var (collectionLevel, collectionTitle) = GetLevelAndTitle(collectionCurrentPoints, "Collection");
+                int collectionMaxLevel = GetMaxLevel("Collection");
+                CollectionTitle.Text = collectionTitle;
+                CollectionLevel.Text = $"{collectionLevel}/{collectionMaxLevel}";
+                
+                // Global Category
+                globalLevelProgress.Progress = globalMaxPoints > 0 ? Math.Round((globalCurrentPoints * 100.0 / globalMaxPoints), 0) : 0;
+                int globalLevel = collectionLevel+discoveryLevel+socialLevel+competitionLevel;
+                int globalMaxlevel = GetMaxLevel("Competition") + GetMaxLevel("Social") + GetMaxLevel("Collection") + GetMaxLevel("Discovery");
+                //GlobalTitle.Text = globalTitle;
+                GlobalLevel.Text = $"{globalLevel}/{globalMaxlevel}";
+            }
+        }
+        private (int currentLevel, string title) GetLevelAndTitle(int currentPoints, string category)
+            {
+                using (var connection = new SQLiteConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = @"SELECT Level, Title FROM objectives_levels
+                         WHERE Category = @Category AND PointsNeeded <= @CurrentPoints
+                         ORDER BY PointsNeeded DESC LIMIT 1";
+
+                    using (var command = new SQLiteCommand(query, connection))
+                    {
+                        command.Parameters.AddWithValue("@Category", category);
+                        command.Parameters.AddWithValue("@CurrentPoints", currentPoints);
+
+                        using (var reader = command.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                int currentLevel = reader.GetInt32(0);
+                                string title = reader.GetString(1);
+                                return (currentLevel, title);
+                            }
+                            return (0, "Unknown"); // Default if no level is found
+                        }
+                    }
+                }
+            }
+        private int GetMaxLevel(string category)
+        {
+            using (var connection = new SQLiteConnection(connectionString))
+            {
+                connection.Open();
+                string query = @"SELECT MAX(Level) FROM objectives_levels WHERE Category = @Category";
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Category", category);
+                    return Convert.ToInt32(command.ExecuteScalar());
+                }
+            }
+        }
+
+        private void LoadSubCategories(string parentCategory, string type, UniformGrid targetGrid)
+        {
+            targetGrid.Children.Clear();  // Clear previous items
+
+            string query = @"SELECT Icon, SubcategoryName, StatusCheck 
+                             FROM objectives_subcategories 
+                             WHERE ParentCategory = @ParentCategory AND Type = @Type";
+
+            List<UIElement> cards = new List<UIElement>();
+
+            using (var connection = new SQLiteConnection(connectionString))
+            {
+                connection.Open();
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ParentCategory", parentCategory);
+                    command.Parameters.AddWithValue("@Type", type);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var subCategoryCard = CreateSubCategoryCard(
+                                reader.GetString(0),  // Icon path
+                                reader.GetString(1),  // Subcategory Name
+                                reader.GetString(2)); // StatusCheck
+
+                            cards.Add(subCategoryCard);
+                        }
+                    }
+                }
+            }
+            foreach (var card in cards)
+            {
+                targetGrid.Children.Add(card);
+            }
+        }
+
+        private UIElement CreateSubCategoryCard(string iconFileName, string subcategoryName, string status)
+        {
+            string iconPath = $"/Images/ico/objectives/{iconFileName}";
+
+            var card = new Border
+            {
+                Margin = new Thickness(5),
+                Padding = new Thickness(10),
+                Background = new SolidColorBrush((Color)ColorConverter.ConvertFromString("#FF161B1E")),
+                CornerRadius = new CornerRadius(5),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(85, 85, 85)),
+                BorderThickness = new Thickness(1)
+            };
+
+            var grid = new Grid();
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(85) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(1, GridUnitType.Star) });
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(40) });
+
+            var image = new Image
+            {
+                Source = new BitmapImage(new Uri(iconPath, UriKind.RelativeOrAbsolute)),
+                Width = 77,
+                Height = 77,
+                VerticalAlignment = VerticalAlignment.Center,
+                Margin = new Thickness(0, 0, 10, 0)
+            };
+            Grid.SetColumn(image, 0);
+            grid.Children.Add(image);
+
+            var middleStackPanel = new StackPanel { VerticalAlignment = VerticalAlignment.Center };
+
+            // Fetch subcategory points and progress from the dictionary
+            int currentPoints = 0, maxPoints = 0;
+            double progress = 0;
+
+            if (subcategoryProgress.ContainsKey(subcategoryName))
+            {
+                currentPoints = subcategoryProgress[subcategoryName].currentPoints;
+                maxPoints = subcategoryProgress[subcategoryName].maxPoints;
+                progress = maxPoints > 0 ? (double)currentPoints / maxPoints * 100 : 0;
+            }
+
+            // Display Subcategory Name
+            var nameTextBlock = new TextBlock
+            {
+                Text = subcategoryName,
+                FontWeight = FontWeights.Bold,
+                Foreground = Brushes.White,
+                FontSize = 16,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+            middleStackPanel.Children.Add(nameTextBlock);
+
+            // Display CurrentPoints / MaxPoints
+            var pointsTextBlock = new TextBlock
+            {
+                Text = $"Points: {currentPoints} / {maxPoints}",
+                Foreground = Brushes.LightGray,
+                FontSize = 14,
+                Margin = new Thickness(0, 0, 0, 5)
+            };
+            middleStackPanel.Children.Add(pointsTextBlock);
+
+            // Create a grid for progress bar and text
+            var progressGrid = new Grid();
+
+            // Progress bar
+            var progressBar = new ProgressBar
+            {
+                Minimum = 0,
+                Maximum = 100,
+                Height = 15,
+                Value = progress,
+                Foreground = Brushes.Green,
+                Background = new SolidColorBrush(Color.FromRgb(42, 42, 42)),
+                Padding = new Thickness(2,2,2,2),
+                Margin = new Thickness(0, 5, 0, 5)
+            };
+            progressGrid.Children.Add(progressBar);
+
+            // TextBlock overlay for progress percentage
+            var progressTextBlock = new TextBlock
+            {
+                Text = $"{progress:F0}%",  // Display progress percentage
+                Foreground = Brushes.White,
+                FontSize = 12,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+                FontWeight = FontWeights.Bold
+            };
+            progressGrid.Children.Add(progressTextBlock);
+
+            // Add the progress grid to the middle stack panel
+            middleStackPanel.Children.Add(progressGrid);
+
+            Grid.SetColumn(middleStackPanel, 1);
+            grid.Children.Add(middleStackPanel);
+
+            // Add a checkbox for status
+            var checkBox = new CheckBox
+            {
+                IsChecked = status.ToLower() == "true",
+                VerticalAlignment = VerticalAlignment.Center,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                IsEnabled = false,
+                IsHitTestVisible = false,
+                Focusable = false
+            };
+            Grid.SetColumn(checkBox, 2);
+            grid.Children.Add(checkBox);
+
+            card.Child = grid;
+            card.Tag = subcategoryName;
+            card.MouseLeftButtonUp += SubCategoryCard_Click;
+
+            return card;
+        }
+
+        private void SubCategoryCard_Click(object sender, RoutedEventArgs e)
+        {
+            if (sender is Border clickedCard && clickedCard.Tag is string subcategoryName)
+            {
+                var selectedTab = ObjectivesTabControl.SelectedItem as TabItem;
+
+                if (selectedTab != null)
+                {
+                    string category = null;
+                    string subcategory = null;
+
+                    if (selectedTab == Tab1Grid.Parent as TabItem)
+                    {
+                        category = Tab1.Text;
+                        subcategory = Tab1Type.Text;
+                    }
+                    else if (selectedTab == Tab2Grid.Parent as TabItem)
+                    {
+                        category = Tab2.Text;
+                        subcategory = Tab2Type.Text;
+                    }
+                    else if (selectedTab == Tab3Grid.Parent as TabItem)
+                    {
+                        category = Tab3.Text;
+                        subcategory = Tab3Type.Text;
+                    }
+                    else if (selectedTab == Tab4Grid.Parent as TabItem)
+                    {
+                        category = Tab4.Text;
+                        subcategory = Tab4Type.Text;
+                    }
+                    else if (selectedTab == Tab5Grid.Parent as TabItem)
+                    {
+                        category = Tab5.Text;
+                        subcategory = Tab5Type.Text;
+                    }
+                    else if (selectedTab == Tab6Grid.Parent as TabItem)
+                    {
+                        category = Tab6.Text;
+                        subcategory = Tab6Type.Text;
+                    }
+                    else if (selectedTab == Tab7Grid.Parent as TabItem)
+                    {
+                        category = Tab7.Text;
+                        subcategory = Tab7Type.Text;
+                    }
+                    else if (selectedTab == Tab8Grid.Parent as TabItem)
+                    {
+                        category = Tab8.Text;
+                        subcategory = Tab8Type.Text;
+                    }
+
+                    if (!string.IsNullOrEmpty(category) && !string.IsNullOrEmpty(subcategory))
+                    {
+                        LoadObjectivesForSubCategory(category, subcategoryName);
+                    }
+                    else
+                    {
+                        AppNotice.Show(this, "Category or Subcategory not found.");
+                    }
+                }
+            }
+        }
+
+        private void LoadObjectivesForSubCategory(string category, string subcategoryName)
+        {
+            selectedObjectiveCategory = category;
+            selectedObjectiveGroup = subcategoryName;
+            ObjectiveScrollViewerContent.Children.Clear();
+            ObjectiveScrollViewer.Visibility = Visibility.Visible;
+            SubCategoryRow.Height = new GridLength(3, GridUnitType.Star);
+            ObjectiveDetailsRow.Height = new GridLength(2, GridUnitType.Star);
+
+            string query = @"SELECT Status, Description, Island, Points, MaximumPoints, SaveVerified, SaveDetail
+                     FROM displayed_objectives
+                     WHERE ParentCategory = @ParentCategory AND Subcategory = @SubcategoryName";
+
+            using (var connection = new SQLiteConnection(connectionString))
+            {
+                connection.Open();
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@ParentCategory", category);
+                    command.Parameters.AddWithValue("@SubcategoryName", subcategoryName);
+
+                    using (var reader = command.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            var objectiveCard = CreateObjectiveCard(
+                                !reader.IsDBNull(0) && Convert.ToBoolean(reader.GetString(0)),
+                                reader.IsDBNull(1) ? "" : reader.GetString(1),
+                                reader.IsDBNull(2) ? "" : reader.GetString(2),
+                                reader.GetInt32(3), reader.GetInt32(4), reader.GetInt32(5) == 1,
+                                reader.IsDBNull(6) ? null : reader.GetString(6));
+
+                            ObjectiveScrollViewerContent.Children.Add(objectiveCard);
+                        }
+                    }
+                }
+            }
+        }
+        private UIElement CreateObjectiveCard(bool completed, string description, string island,
+            int currentPoints, int maximumPoints, bool saveVerified, string saveDetail)
+        {
+            var card = new Border
+            {
+                Margin = new Thickness(5),
+                Padding = new Thickness(10),
+                Background = new SolidColorBrush(Color.FromRgb(42, 42, 42)),
+                CornerRadius = new CornerRadius(5),
+                BorderBrush = new SolidColorBrush(Color.FromRgb(85, 85, 85)),
+                BorderThickness = new Thickness(1)
+            };
+
+            var stackPanel = new StackPanel { Orientation = Orientation.Horizontal };
+
+            var statusCheckBox = new CheckBox
+            {
+                Margin = new Thickness(5),
+                IsChecked = completed,
+                IsEnabled = false,
+                Focusable = false,
+                ToolTip = saveVerified ? "Completion recorded in the active save profile." : null
+            };
+            ToolTipService.SetShowOnDisabled(statusCheckBox, true);
+            stackPanel.Children.Add(statusCheckBox);
+
+            var descriptionTextBlock = new TextBlock
+            {
+                Text = description,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                FontSize = 14,
+                Margin = new Thickness(0, 0, 5, 0)
+            };
+            stackPanel.Children.Add(descriptionTextBlock);
+
+            var islandTextBlock = new TextBlock
+            {
+                Text = island,
+                Foreground = Brushes.White,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                FontSize = 14,
+                Margin = new Thickness(0, 0, 0, 0)
+            };
+            stackPanel.Children.Add(islandTextBlock);
+
+            var pointsTextBlock = new TextBlock
+            {
+                Text = $"| Points: {currentPoints} / {maximumPoints}",
+                Foreground = Brushes.LightGray,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                FontSize = 14,
+                Margin = new Thickness(5, 0, 5, 0)
+            };
+            stackPanel.Children.Add(pointsTextBlock);
+
+            var content = new StackPanel();
+            content.Children.Add(stackPanel);
+            if (saveDetail != null)
+                content.Children.Add(new TextBlock
+                {
+                    Text = saveDetail, Foreground = Brushes.LightGray, Margin = new Thickness(28, 2, 0, 0)
+                });
+            card.Child = content;
+            return card;
+        }
+        internal void RefreshSaveProgress()
+        {
+            UpdatePointsAndRecalculateProgress();
+            if (selectedObjectiveGroup != null)
+            {
+                double offset = ObjectiveScrollViewer.VerticalOffset;
+                LoadObjectivesForSubCategory(selectedObjectiveCategory, selectedObjectiveGroup);
+                ObjectiveScrollViewer.ScrollToVerticalOffset(offset);
+            }
+        }
+
+        private void UpdatePointsAndRecalculateProgress()
+        {
+            // Recalculate dictionaries
+            LoadPointsIntoDictionaries();
+            LoadProgressFromDatabase();
+
+            // Loop through all tabs to update progress for each subcategory
+            foreach (TabItem tab in ObjectivesTabControl.Items)
+            {
+                // Get the grid for the current tab
+                if (tab.Content is Grid tabGrid)
+                {
+                    UniformGrid subCategoryGrid = GetSubCategoryGrid(tabGrid);
+                    if (subCategoryGrid != null)
+                    {
+                        // Loop through each card in the current tab's grid
+                        foreach (UIElement child in subCategoryGrid.Children)
+                        {
+                            if (child is Border card && card.Tag is string tag && subcategoryProgress.ContainsKey(tag))
+                            {
+                                var grid = (Grid)card.Child;
+                                var middleStackPanel = (StackPanel)grid.Children[1];
+
+                                // Update points and progress bar for the subcategory
+                                var progressInfo = subcategoryProgress[tag];
+                                int currentPoints = progressInfo.currentPoints;
+                                int maxPoints = progressInfo.maxPoints;
+                                double progress = maxPoints > 0 ? (double)currentPoints / maxPoints * 100 : 0;
+
+                                // Update the points text
+                                var pointsTextBlock = (TextBlock)middleStackPanel.Children[1]; // Points text block assumed to be at index 1
+                                pointsTextBlock.Text = $"Points: {currentPoints} / {maxPoints}";
+
+                                // Find the progress bar grid
+                                var progressGrid = (Grid)middleStackPanel.Children[2]; // Assuming the grid with the progress bar and text is at index 2
+
+                                // Update the progress bar
+                                var progressBar = (ProgressBar)progressGrid.Children[0]; // Assuming ProgressBar is the first child of the progress grid
+                                progressBar.Value = progress;
+
+                                // Update the progress percentage text
+                                var progressTextBlock = (TextBlock)progressGrid.Children[1]; // Assuming the percentage text block is the second child
+                                progressTextBlock.Text = $"{progress:F0}%"; // Display progress as a percentage
+
+                                // Check if all objectives are completed
+                                var checkBox = (CheckBox)grid.Children[2];
+                                checkBox.IsChecked = AllObjectivesCompleted(tag);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private bool AllObjectivesCompleted(string subcategoryName)
+        {
+            // Query to check if all objectives in the subcategory are complete
+            string query = @"SELECT COUNT(*) FROM displayed_objectives
+                     WHERE Subcategory = @Subcategory AND Status = 'false'";
+
+            using (var connection = new SQLiteConnection(connectionString))
+            {
+                connection.Open();
+
+                using (var command = new SQLiteCommand(query, connection))
+                {
+                    command.Parameters.AddWithValue("@Subcategory", subcategoryName);
+                    int incompleteCount = Convert.ToInt32(command.ExecuteScalar());
+
+                    // If incompleteCount is 0, it means all objectives are complete
+                    return incompleteCount == 0;
+                }
+            }
+        }
+
+        private static UniformGrid GetSubCategoryGrid(Grid tabGrid)
+        {
+            foreach (UIElement element in tabGrid.Children)
+            {
+                if (element is UniformGrid directGrid)
+                    return directGrid;
+                if (element is ScrollViewer scrollViewer && scrollViewer.Content is UniformGrid scrolledGrid)
+                    return scrolledGrid;
+            }
+
+            return null;
+        }
+
+
+        private void ObjectivesTabControl_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            selectedObjectiveGroup = null;
+            ObjectiveScrollViewer.Visibility = Visibility.Collapsed;
+            SubCategoryRow.Height = new GridLength(1, GridUnitType.Star);
+            ObjectiveDetailsRow.Height = new GridLength(0);
+            ObjectiveScrollViewerContent.Children.Clear();
+        }
+    }
+}

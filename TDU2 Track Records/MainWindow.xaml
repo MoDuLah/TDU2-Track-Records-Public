@@ -1,0 +1,861 @@
+<Window x:Class="TDU2_Track_Records.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TDU2_Track_Records.Classes"
+        xmlns:q="clr-namespace:TDU2_Track_Records"
+        xmlns:p="clr-namespace:TDU2_Track_Records.Properties"
+        xmlns:behaviors="clr-namespace:TDU2_Track_Records.Classes"
+        xmlns:vm="clr-namespace:TDU2_Track_Records.ViewModels"
+        mc:Ignorable="d" WindowStyle="None" AllowsTransparency="True" 
+        Title="TDU2 Track Records Public" SizeToContent="WidthAndHeight"
+        WindowStartupLocation="CenterScreen"
+        Icon="/TDU2.ico" FontFamily="{DynamicResource AppMainFontFamily}" FontSize="16"
+        Background="{x:Null}"
+        Opacity="{Binding Source={x:Static p:Settings.Default}, Path=MainWindowOpacity, Mode=OneWay}"
+        MouseLeftButtonDown="Window_MouseLeftButtonDown" >
+    <Window.Resources>
+        <local:ByteArrayToImageSourceConverter x:Key="ByteArrayToImageSourceConverter"/>
+    </Window.Resources>
+    <Viewbox x:Name="MainScaleViewbox" Stretch="Uniform" StretchDirection="DownOnly">
+    <Border x:Name="MainShellBorder" BorderBrush="{DynamicResource AppShellBorderBrush}"
+            BorderThickness="{DynamicResource AppShellBorderThickness}"
+            CornerRadius="{DynamicResource AppShellCornerRadius}"
+            Background="{DynamicResource AppSectionBodyBrush}"
+            Margin="0"
+            HorizontalAlignment="Center" VerticalAlignment="Center">
+        <Grid x:Name="MainLayoutGrid" Background="{DynamicResource AppCarbonBackgroundBrush}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition x:Name="OuterLeftColumn" Width="{DynamicResource AppOuterGutterWidth}" />
+                <ColumnDefinition x:Name="EventLayoutColumn" Width="{DynamicResource AppEventColumnWidth}" />
+                <ColumnDefinition x:Name="VehicleLayoutColumn" Width="{DynamicResource AppVehicleColumnWidth}" />
+                <ColumnDefinition x:Name="RaceLayoutColumn" Width="{DynamicResource AppRaceColumnWidth}" />
+                <ColumnDefinition x:Name="OuterRightColumn" Width="{DynamicResource AppOuterGutterWidth}" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="{DynamicResource AppOuterTopBottomHeight}" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" MinHeight="54" />
+                <RowDefinition x:Name="MainContentRow" Height="Auto" />
+                <RowDefinition Height="{DynamicResource AppStatusRowHeight}" />
+                <RowDefinition Height="{DynamicResource AppOuterTopBottomHeight}" />
+            </Grid.RowDefinitions>
+            <Border Grid.Column="1" Grid.Row="1" Grid.ColumnSpan="3"
+                    Margin="{DynamicResource AppTitleBarMargin}"
+                    MouseLeftButtonDown="TitleBar_MouseLeftButtonDown"
+                    MouseLeftButtonUp="TitleBar_MouseLeftButtonUp"
+                    MouseMove="TitleBar_MouseMove"
+                    Background="{DynamicResource AppToolbarBackgroundBrush}"
+                    BorderBrush="{DynamicResource AppToolbarBorderBrush}"
+                    BorderThickness="{DynamicResource AppToolbarBorderThickness}"
+                    CornerRadius="{DynamicResource AppToolbarCornerRadius}">
+                <DockPanel x:Name="IconTitle" LastChildFill="False" Margin="0,0,108,0">
+                    <Image x:Name="AppLogo" Source="/tdu2.ico" Width="{DynamicResource AppLogoSize}" Height="{DynamicResource AppLogoSize}"
+                           Stretch="Uniform" VerticalAlignment="Center" Margin="7,3,0,3" DockPanel.Dock="Left"/>
+                    <TextBlock x:Name="Currentversion" FontSize="{DynamicResource AppTitleFontSize}" Foreground="{DynamicResource AppTitleForegroundBrush}"
+                               FontFamily="{DynamicResource AppMainFontFamily}" FontWeight="Bold" Margin="7,0,0,0"
+                               VerticalAlignment="Center" HorizontalAlignment="Left"/>
+                    <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" Margin="12,0,0,0" VerticalAlignment="Center">
+                        <Ellipse Width="6" Height="6" Fill="{DynamicResource AppAccentBrush}" Margin="0,0,5,0"/>
+                        <TextBlock x:Name="ActiveProfileText" Foreground="#FFFFB4AA" FontSize="11" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </DockPanel>
+            </Border>
+            <Border x:Name="FeatureToolbarBackground" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="3"
+                    Background="{DynamicResource AppToolbarBackgroundBrush}"
+                    BorderBrush="{DynamicResource AppToolbarBorderBrush}"
+                    BorderThickness="{DynamicResource AppToolbarBorderThickness}"/>
+            <WrapPanel x:Name="FeatureToolbar" Grid.Column="1" Grid.Row="2" Grid.ColumnSpan="3"
+                       HorizontalAlignment="Left" VerticalAlignment="Center" Panel.ZIndex="1"
+                       Margin="{DynamicResource AppFeatureToolbarMargin}">
+                <Border x:Name="EventsNavButton" Style="{DynamicResource AppNavActiveButtonStyle}" ToolTip="Events"
+                        MouseLeftButtonDown="Events_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal">
+                        <Image x:Name="EventsButton" Width="{DynamicResource AppNavIconSize}" Height="{DynamicResource AppNavIconSize}"
+                               Source="Images/ico/events/ico_cup_race.png" Stretch="Uniform"/>
+                        <TextBlock Text="Events" Style="{DynamicResource AppNavLabelStyle}"/>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="TracksNavButton" Style="{DynamicResource AppNavButtonStyle}" ToolTip="Tracks &amp; Events"
+                        MouseLeftButtonDown="tracks_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal">
+                <Image x:Name="tracks_Button" Width="{DynamicResource AppNavIconSize}" Height="{DynamicResource AppNavIconSize}" Stretch="Uniform">
+                    <Image.Style>
+                        <Style TargetType="{x:Type Image}">
+                            <Setter Property="Source" Value="Images/ico/navigation/crc.png"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Source" Value="Images/ico/navigation/crc_over.png"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+                        <TextBlock Text="Tracks &amp; Events" Style="{DynamicResource AppNavLabelStyle}"/>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="ObjectivesNavButton" Style="{DynamicResource AppNavButtonStyle}" ToolTip="Objectives"
+                        MouseLeftButtonDown="Objectives_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal">
+                <Image x:Name="Objectives_Button" Width="{DynamicResource AppNavIconSize}" Height="{DynamicResource AppNavIconSize}" Stretch="Uniform">
+                    <Image.Style>
+                        <Style TargetType="{x:Type Image}">
+                            <Setter Property="Source" Value="Images/ico/navigation/objectives.png"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Source" Value="Images/ico/navigation/objectives_over.png"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+                        <TextBlock Text="Objectives" Style="{DynamicResource AppNavLabelStyle}"/>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="HousesNavButton" Style="{DynamicResource AppNavButtonStyle}" ToolTip="Houses"
+                        MouseLeftButtonDown="Houses_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal">
+                <Image x:Name="Houses_Button" Width="{DynamicResource AppNavIconSize}" Height="{DynamicResource AppNavIconSize}" Stretch="Uniform">
+                    <Image.Style>
+                        <Style TargetType="{x:Type Image}">
+                            <Setter Property="Source" Value="Images/ico/navigation/house.png"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Source" Value="Images/ico/navigation/house_over.png"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+                        <TextBlock Text="Houses" Style="{DynamicResource AppNavLabelStyle}"/>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="DealershipNavButton" Style="{DynamicResource AppNavButtonStyle}" ToolTip="Dealerships"
+                        MouseLeftButtonDown="Dealership_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal">
+                <Image x:Name="Dealership_Button" Width="{DynamicResource AppNavIconSize}" Height="{DynamicResource AppNavIconSize}" Stretch="Uniform">
+                    <Image.Style>
+                        <Style TargetType="{x:Type Image}">
+                            <Setter Property="Source" Value="Images/ico/navigation/dealership.png"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Source" Value="Images/ico/navigation/dealership_over.png"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+                        <TextBlock Text="Dealerships" Style="{DynamicResource AppNavLabelStyle}"/>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="PowerLapsNavButton" Style="{DynamicResource AppNavButtonStyle}" ToolTip="Power Laps Leaderboard"
+                        MouseLeftButtonDown="PowerLaps_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal">
+                <Image x:Name="PowerLaps_Button" Width="{DynamicResource AppNavIconSize}" Height="{DynamicResource AppNavIconSize}" Stretch="Uniform">
+                    <Image.Style>
+                        <Style TargetType="{x:Type Image}">
+                            <Setter Property="Source" Value="Images/ico/navigation/leaderboard.png"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Source" Value="Images/ico/navigation/leaderboard_over.png"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+                        <TextBlock Text="Power Laps" Style="{DynamicResource AppNavLabelStyle}"/>
+                    </StackPanel>
+                </Border>
+                <Border x:Name="SettingsNavButton" Style="{DynamicResource AppNavButtonStyle}" ToolTip="Settings"
+                        MouseLeftButtonDown="Settings_MouseLeftButtonDown">
+                    <StackPanel Orientation="Horizontal">
+                <Image x:Name="Settings_Button" Width="{DynamicResource AppNavIconSize}" Height="{DynamicResource AppNavIconSize}"
+                       Stretch="Uniform" AutomationProperties.AccessKey="s">
+                    <Image.Style>
+                        <Style TargetType="{x:Type Image}">
+                            <Setter Property="Source" Value="Images/ico/navigation/settings.png"/>
+                            <Style.Triggers>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter Property="Source" Value="Images/ico/navigation/settings_over.png"/>
+                                </Trigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Image.Style>
+                </Image>
+                        <TextBlock Text="Settings" Style="{DynamicResource AppNavLabelStyle}"/>
+                    </StackPanel>
+                </Border>
+            </WrapPanel>
+            <DockPanel x:Name="WindowControls" Grid.Column="3" Grid.Row="1" HorizontalAlignment="Right"
+                       VerticalAlignment="Center" Margin="0,0,4,0" Panel.ZIndex="2">
+                    <Image x:Name="Minimize_Button" MouseLeftButtonDown="Minimize_MouseLeftButtonDown"
+                       Margin="0,0,4,0" ToolTip="Minimize" AutomationProperties.AccessKey="m"
+                       Width="{DynamicResource AppWindowControlIconSize}" Height="{DynamicResource AppWindowControlIconSize}" Stretch="Uniform">
+                        <Image.Style>
+                            <Style TargetType="{x:Type Image}">
+                                <Setter Property="Source" Value="Images/ico/navigation/minimize.png"/>
+                                <Style.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Source" Value="Images/ico/navigation/minimize_over.png"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                    <Image x:Name="Maximize_Button"
+       MouseLeftButtonDown="Maximize_MouseLeftButtonDown"
+       Margin="0,0,4,0"
+       Width="{DynamicResource AppWindowControlIconSize}"
+       Height="{DynamicResource AppWindowControlIconSize}"
+       Stretch="Uniform"
+       AutomationProperties.Name="Maximize or Restore">
+
+                        <Image.Style>
+                            <Style TargetType="{x:Type Image}">
+                                <Setter Property="Source"
+                    Value="Images/ico/navigation/maximize.png"/>
+
+                                <Style.Triggers>
+                                    <!-- Normal hover -->
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter Property="Source"
+                            Value="Images/ico/navigation/maximize_over.png"/>
+                                    </Trigger>
+
+                                    <!-- Maximized window -->
+                                    <DataTrigger
+                    Binding="{Binding Tag, RelativeSource={RelativeSource Self}}"
+                    Value="True">
+                                        <Setter Property="Source"
+                            Value="Images/ico/navigation/restore.png"/>
+                                    </DataTrigger>
+
+                                    <!-- Maximized window hover -->
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition
+                            Binding="{Binding Tag, RelativeSource={RelativeSource Self}}"
+                            Value="True"/>
+                                            <Condition
+                            Binding="{Binding IsMouseOver,
+                                RelativeSource={RelativeSource Self}}"
+                            Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Source"
+                            Value="Images/ico/navigation/restore_over.png"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Image.Style>
+                    </Image>
+                    <Image x:Name="Close_Button" MouseLeftButtonDown="Close_Button_MouseLeftButtonDown"
+                            Margin="0,0,2,0" Width="{DynamicResource AppWindowControlIconSize}" Height="{DynamicResource AppWindowControlIconSize}"
+                            Stretch="Uniform" ToolTip="Close" AutomationProperties.AccessKey="x">
+                            <Image.Style>
+                                <Style TargetType="{x:Type Image}">
+                                    <Setter Property="Source" Value="Images/ico/navigation/close.png"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Source" Value="Images/ico/navigation/close_over.png"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                     </Image>
+            </DockPanel>
+            <!--Row 1-->
+            <GroupBox x:Name="EventGroupBox" Header="Event" Grid.Column="1" Grid.Row="3" Margin="0,4,4,4"
+                      Style="{DynamicResource AppMainSectionGroupBoxStyle}">
+                <DockPanel VerticalAlignment="Top">
+                    <GroupBox x:Name="TrackProgressGroupBox" Header="Progress" DockPanel.Dock="Bottom">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                            <TextBlock x:Name="txt_Progress_1" Text="0/181" />
+                            <Border Width="1" Margin="5,0" Background="Red"/>
+                            <TextBlock x:Name="txt_Progress_2" Text="0%" />
+                        </StackPanel>
+                    </GroupBox>
+                    <ScrollViewer x:Name="EventDetailsScrollViewer" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <StackPanel>
+                            <Grid x:Name="EventSelectorsPrimaryGrid">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <GroupBox x:Name="IslandSelectorGroup" Header="Island" MinWidth="135" Grid.Row="0" Grid.Column="0">
+                                    <ComboBox x:Name="combo_Island" TabIndex="999" HorizontalAlignment="Stretch"
+                                              SelectionChanged="combo_Island_SelectionChanged">
+                                        <ComboBoxItem>Ibiza</ComboBoxItem>
+                                        <ComboBoxItem>Hawaii</ComboBoxItem>
+                                        <ComboBoxItem>Casino</ComboBoxItem>
+                                    </ComboBox>
+                                </GroupBox>
+                                <GroupBox x:Name="ClassSelectorGroup" Header="Class" MinWidth="150" Grid.Row="0" Grid.Column="1">
+                                    <ComboBox x:Name="combo_Class" MinWidth="170" VerticalAlignment="Stretch"
+                                              HorizontalContentAlignment="Center" VerticalContentAlignment="Center"
+                                              Height="{DynamicResource AppSelectorHeight}" MaxHeight="{DynamicResource AppSelectorHeight}" Padding="5"
+                                              SelectionChanged="combo_Class_SelectionChanged" TabIndex="1005">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image Source="{Binding ImagePath}" Width="{DynamicResource AppSelectorIconSize}"
+                                                           Height="{DynamicResource AppSelectorIconSize}" Stretch="Uniform" Margin="0,0,5,0" />
+                                                    <TextBlock Text="{Binding Description}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </GroupBox>
+                            </Grid>
+                            <Grid x:Name="EventSelectorsSecondaryGrid">
+                                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <GroupBox x:Name="EventTypeSelectorGroup" Header="Event Type" MinWidth="135" Grid.Row="0" Grid.Column="0">
+                                    <ComboBox x:Name="combo_Type" ItemsSource="{Binding}" TabIndex="1000" SelectionChanged="combo_Type_SelectionChanged" HorizontalAlignment="Stretch">
+                                        <ComboBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <Image Source="{Binding ImagePath}" Width="{DynamicResource AppSelectorIconSize}"
+                                                           Height="{DynamicResource AppSelectorIconSize}" Stretch="Uniform" Margin="0,0,5,0" />
+                                                    <TextBlock Text="{Binding Description}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ComboBox.ItemTemplate>
+                                    </ComboBox>
+                                </GroupBox>
+                                <GroupBox x:Name="EventNameSelectorGroup" Header="Event Name" Grid.Row="0" Grid.Column="1">
+                                    <ComboBox x:Name="combo_Track" TabIndex="1001"
+                                              SelectionChanged="Combo_Track_SelectionChanged" MinWidth="160"/>
+                                </GroupBox>
+                            </Grid>
+                            <DockPanel x:Name="DockPanelInfo">
+                                <GroupBox x:Name="InfoGroupBox" Header="Information" MinWidth="135" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                    <Image MouseLeftButtonDown="Btn_TrackInfo_Click" Width="32" Height="32" MinWidth="32" MinHeight="32" ToolTip="Information">
+                                        <Image.Style>
+                                            <Style TargetType="{x:Type Image}">
+                                                <Setter Property="Source" Value="Images/info.png"/>
+                                                <Style.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter Property="Source" Value="Images/info_over.png"/>
+                                                    </Trigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </Image.Style>
+                                    </Image>
+                                </GroupBox>
+                                <GroupBox x:Name="OrientationGroupBox" Header="Orientation" MinWidth="130">
+                                    <DockPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <CheckBox x:Name="cb_orientation" BorderBrush="{x:Null}" Checked="cb_orientation_StateChanged" Unchecked="cb_orientation_StateChanged" Margin="5,0,0,0" Visibility="Collapsed"/>
+                                        <ToggleButton Foreground="{x:Null}" x:Name="txt_orientation" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="32" MinHeight="32" Click="txt_orientation_Click" TabIndex="1003" MouseLeftButtonDown="txt_orientation_MouseLeftButtonDown" Focusable="False">
+                                            <ToggleButton.Template>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Image>
+                                                            <Image.Style>
+                                                                <Style>
+                                                                    <Setter Property="Image.Source" Value="Images/clockwise.png" />
+                                                                    <Setter Property="Image.ToolTip" Value="Clockwise"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+                                                                            <Setter Property="Image.Source" Value="Images/anticlockwise.png" />
+                                                                            <Setter Property="Image.ToolTip" Value="Anticlockwise"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Image.Style>
+                                                        </Image>
+                                                    </StackPanel>
+                                                </ControlTemplate>
+                                            </ToggleButton.Template>
+                                        </ToggleButton>
+                                    </DockPanel>
+                                </GroupBox>
+                                <GroupBox x:Name="WeatherGroupBox" Header="Weather" MinWidth="130">
+                                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                        <CheckBox x:Name="cb_conditions" BorderBrush="{x:Null}" Checked="cb_conditions_StateChanged" Unchecked="cb_conditions_StateChanged" Visibility="Collapsed"/>
+                                        <ToggleButton Foreground="{x:Null}" x:Name="cb_weather" MouseLeftButtonDown="cb_weather_MouseLeftButtonDown" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Background="{x:Null}" BorderBrush="{x:Null}" HorizontalAlignment="Center" VerticalAlignment="Center" MinWidth="32" MinHeight="32" Click="cb_weather_Click" TabIndex="1002" Focusable="False" >
+                                            <ToggleButton.Template>
+                                                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Image>
+                                                            <Image.Style>
+                                                                <Style>
+                                                                    <Setter Property="Image.Source" Value="Images/sun.png" />
+                                                                    <Setter Property="Image.ToolTip" Value="Sunny"/>
+                                                                    <Style.Triggers>
+                                                                        <DataTrigger Binding="{Binding IsChecked,RelativeSource={RelativeSource AncestorType={x:Type ToggleButton}}}" Value="True">
+                                                                            <Setter Property="Image.Source" Value="Images/rain.png" />
+                                                                            <Setter Property="Image.ToolTip" Value="Rainny"/>
+                                                                        </DataTrigger>
+                                                                    </Style.Triggers>
+                                                                </Style>
+                                                            </Image.Style>
+                                                        </Image>
+                                                    </StackPanel>
+                                                </ControlTemplate>
+                                            </ToggleButton.Template>
+                                        </ToggleButton>
+                                    </StackPanel>
+                                </GroupBox>
+                            </DockPanel>
+                            <DockPanel x:Name="DockPanelLaps">
+                                <GroupBox x:Name="LapLengthGroupBox" Header="Lap Length" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" MinWidth="135">
+                                    <DockPanel HorizontalAlignment="Center">
+                                        <TextBlock x:Name="lap_Length"
+                                                   DockPanel.Dock="left"
+                                                   Text="{Binding}"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock x:Name="Lap_Distance_Unit"
+                                                   DockPanel.Dock="Right"
+                                                   Text="{Binding Source={x:Static p:Settings.Default}, Path=distance, Mode=OneWay}"
+                                                   VerticalAlignment="Center"
+                                                   Visibility="Collapsed"/>
+                                        <!---->
+                                    </DockPanel>
+                                </GroupBox>
+                                <GroupBox x:Name="LapsGroupBox"  Header="Laps" MinWidth="130">
+                                    <StackPanel>
+                                        <TextBlock x:Name="LapsTextBlock" Text="{Binding}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                        <TextBox x:Name="LapsTextBox" HorizontalAlignment="Center" VerticalAlignment="Center" Visibility="Collapsed" Panel.ZIndex="2"/>
+                                    </StackPanel>
+                                </GroupBox>
+                                <GroupBox x:Name="RaceLengthGroupBox" Header="Race Length" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" MinWidth="130">
+                                    <DockPanel HorizontalAlignment="Center" >
+                                        <TextBlock Text="{Binding}" x:Name="race_Length" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                        <TextBlock x:Name="RaceLength_Distance_Unit"
+                                                   Text="{Binding Source={x:Static p:Settings.Default}, Path=distance, Mode=OneWay}"
+                                                   Visibility="Collapsed" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                </GroupBox>
+
+                            </DockPanel>
+                            <DockPanel x:Name="DockPanelRestricitons">
+                                <GroupBox x:Name="CheckPointsGroupBox" DockPanel.Dock="Right" Header="Checkpoints"
+                                          MinWidth="78" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch">
+                                    <TextBlock x:Name="CheckpointsTextBlock" VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                </GroupBox>
+                                <DockPanel>
+                                <GroupBox x:Name="ClassRestictionGroupBox"
+                                          DockPanel.Dock="Top"
+                                          MinWidth="135"
+                                          HorizontalContentAlignment="Stretch"
+                                          VerticalContentAlignment="Stretch">
+                                    <GroupBox.Header>
+                                        <TextBlock Text="Class Restriction"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   TextAlignment="Center" />
+                                    </GroupBox.Header>
+                                        <StackPanel>
+                                            <Image x:Name="ClassRestrictionImage"
+                                                   MaxWidth="{DynamicResource AppClassRestrictionIconSize}"
+                                                   MaxHeight="{DynamicResource AppClassRestrictionIconSize}"
+                                                   Stretch="Uniform" HorizontalAlignment="Center" VerticalAlignment="Center" Margin="4"
+                                                   SnapsToDevicePixels="True" RenderOptions.BitmapScalingMode="HighQuality" />
+                                            <TextBlock x:Name="ClassRestrictionTextBlock" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                </GroupBox>
+                                <GroupBox x:Name="VehicleRestictionGroupBox"
+                                          DockPanel.Dock="Left"
+                                          MinWidth="135"
+                                          HorizontalContentAlignment="Stretch"
+                                          VerticalContentAlignment="Stretch">
+                                    <GroupBox.Header>
+                                        <TextBlock Text="Vehicle Restriction"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"
+                                                   TextAlignment="Center"/>
+                                    </GroupBox.Header>
+                                    <TextBlock x:Name="VehicleRestrictionTextBlock" HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                </GroupBox>
+                                </DockPanel>
+                            </DockPanel>
+                            <DockPanel x:Name="DockPanelDetails">
+                                <GroupBox x:Name="MinimumSpeedGroupBox"
+                                          DockPanel.Dock="Top"
+                                          Header="Minimum Speed"
+                                          HorizontalContentAlignment="Stretch"
+                                          VerticalContentAlignment="Stretch"
+                                          MinWidth="135">
+                                    <DockPanel HorizontalAlignment="Center" >
+                                        <TextBlock x:Name="MinimumSpeedTextBlock" Text="{Binding}" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                        <TextBlock x:Name="MinimumSpeed_Distance_Unit" Text="{Binding Source={x:Static p:Settings.Default}, Path=distance, Mode=OneWay}" Visibility="Collapsed" VerticalAlignment="Center"/>
+                                    </DockPanel>
+                                </GroupBox>
+                            </DockPanel>
+                            <GroupBox Header="Record" x:Name="TrackRecordGroupbox">
+                                <DockPanel HorizontalAlignment="Center">
+                                    <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                                        <Border Width="1" Margin="5,0" Background="Red"/>
+                                        <TextBlock x:Name="txt_lrec" Margin="5,0" VerticalAlignment="Center"/>
+                                        <Image x:Name="weatherS_lrec" Source="Images/sun.png" Visibility="Collapsed"/>
+                                        <Image x:Name="weatherR_lrec" Source="Images/rain.png" Visibility="Collapsed"/>
+                                        <Image x:Name="orientationC_lrec" Source="Images/clockwise.png" Visibility="Collapsed"/>
+                                        <Image x:Name="orientationA_lrec" Source="Images/anticlockwise.png" Visibility="Collapsed"/>
+                                    </StackPanel>
+                                    <TextBlock x:Name="txt_lrecCar" Margin="5,0" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                </DockPanel>
+                            </GroupBox>
+                        </StackPanel>
+                    </ScrollViewer>
+                </DockPanel>
+            </GroupBox>
+            <!--Row 2-->
+            <GroupBox x:Name="VehicleGroupBox" Header="Vehicle" Grid.Row="3" Grid.Column="2" Margin="4" Visibility="Visible"
+                      Style="{DynamicResource AppMainSectionGroupBoxStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                              FocusVisualStyle="{x:Null}">
+                <StackPanel>
+                    <StackPanel>
+                        <GroupBox x:Name="VehicleNameSelectorGroup" Header="Name">
+                            <ComboBox x:Name="combo_Vehicle" ItemsSource="{Binding}" SelectionChanged="Combo_Vehicle_SelectionChanged"
+                                      TabIndex="1006"
+                                      VerticalAlignment="Stretch" MinWidth="320" HorizontalAlignment="Center" Width="399" />
+                        </GroupBox>
+                        <Border Height="252" Margin="2,4" Padding="5" Background="#FF111317"
+                                BorderBrush="#FF333539" BorderThickness="1">
+                            <Grid>
+                                <Image x:Name="VehiclePreviewImage"
+                                       Source="{Binding SelectedItem, ElementName=combo_Vehicle, Converter={StaticResource ByteArrayToImageSourceConverter}}"
+                                       Stretch="Uniform" Margin="2" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <TextBlock Text="SELECT A VEHICLE" Foreground="{DynamicResource AppMutedForegroundBrush}"
+                                           FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Source, ElementName=VehiclePreviewImage}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </Border>
+                        <TextBlock x:Name="VehicleLocationText" Text="{Binding SelectedItem._vehicle_location, ElementName=combo_Vehicle}"
+                                   Margin="5,0,5,3" HorizontalAlignment="Center" TextWrapping="Wrap"
+                                   Foreground="{DynamicResource AppMutedForegroundBrush}" FontSize="12"/>
+                    </StackPanel>
+                    <Grid x:Name="VehicleMetricsGrid">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="{DynamicResource AppVehicleMetricsColumnOneWidth}"/>
+                            <ColumnDefinition Width="{DynamicResource AppVehicleMetricsColumnGapWidth}"/>
+                            <ColumnDefinition Width="{DynamicResource AppVehicleMetricsColumnTwoWidth}"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        <GroupBox x:Name="Odometer" Header="Odometer" Grid.Row="0" Grid.Column="0">
+                            <TextBox x:Name="txt_odometer"
+                                     TabIndex="1008"
+                                     local:PlaceholderBehavior.PlaceholderText="0.0"
+                                     GotKeyboardFocus="TextBox_GotKeyboardFocus"
+                                     LostFocus="Txt_odometer_LostFocus"
+                                     GotMouseCapture="TextBox_GotMouseCapture"
+                                      PreviewTextInput="txt_odometer_PreviewTextInput" 
+                                     PreviewKeyDown="txt_odometer_PreviewKeyDown"
+                                     TextChanged="txt_odometer_TextChanged"
+                                     Margin="5,0"
+                                     HorizontalContentAlignment="Center"
+                                     MinWidth="200" Tag="0.0"/>
+                        </GroupBox>
+                        <GroupBox x:Name="VehicleRecordGroup" Header="Vehicle Record" Grid.Row="1" Grid.Column="0">
+                            <TextBlock x:Name="txt_carPB" Margin="5,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </GroupBox>
+                    <GroupBox x:Name="RacesRanGroup" Header="Races Ran" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Grid.Row="2" Grid.Column="0">
+                        <TextBlock x:Name="txt_rRan" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </GroupBox>
+                    <GroupBox x:Name="lbl_TotalOdometer" Header="Total Distance Covered" VerticalAlignment="Top" Grid.Row="3" Grid.Column="0">
+                        <DockPanel HorizontalAlignment="Center">
+                            <TextBlock DockPanel.Dock="Left" Text="{Binding}" x:Name="Total_Odometer" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                            <TextBlock DockPanel.Dock="Right" x:Name="total_distance_unit"
+                                           Text="{Binding Source={x:Static p:Settings.Default}, Path=distance, Mode=OneWay}"
+                                           VerticalAlignment="Bottom"
+                                           Visibility="Collapsed"/>
+                        </DockPanel>
+                    </GroupBox>
+                    </Grid>
+                </StackPanel>
+                </ScrollViewer>
+            </GroupBox>
+            <!--Row 3-->
+            <GroupBox x:Name="RaceDataGroupBox" Header="Race Data" Grid.Column="3" Grid.Row="3" Margin="4,4,0,4" Visibility="Visible"
+                      Style="{DynamicResource AppMainSectionGroupBoxStyle}">
+                <Grid x:Name="RaceDataLayout">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/><RowDefinition Height="{DynamicResource AppRaceDataSpacerHeight}"/><RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+                    <GroupBox x:Name="RaceTimeGroupBox" Header="Race Time" Grid.Row="0">
+                        <Grid Margin="20,0,20,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto" MinWidth="5" MaxWidth="5"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto" MinWidth="5" MaxWidth="5"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
+                            </Grid.RowDefinitions>
+                            <TextBlock x:Name="RaceTimePreview" Grid.Column="0" Grid.ColumnSpan="5" Grid.Row="0"
+                                       Text="00:00.00" Foreground="#FFFFB4AA" FontSize="26" FontWeight="Bold"
+                                       MouseRightButtonDown="TextBlock_MouseRightButtonDown"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                            <Border Grid.RowSpan="2" Width="1" Margin="5,0" Background="Red" Grid.Column="5" />
+                            <TextBox x:Name="Race_Min" Grid.Column="0" Grid.Row="1" MinWidth="32" VerticalAlignment="Center" 
+                                     HorizontalAlignment="Center" 
+                                     AutoWordSelection="True" 
+                                     local:PlaceholderBehavior.PlaceholderText="00" 
+                                     local:PlaceholderBehavior.PlaceholderForeground="Gray"
+                                     LostFocus="TextBox_LostFocus" MaxLength="2" PreviewGotKeyboardFocus="TextBox_GotKeyboardFocus" TabIndex="1009" TextChanged="MyTextBox_TextChanged"/>
+                            <TextBlock Grid.Column="1" Grid.Row="1" Text=":" VerticalAlignment="Center"/>
+                            <TextBox x:Name="Race_Sec" Grid.Column="2" Grid.Row="1" MinWidth="32" VerticalAlignment="Center" 
+                                     HorizontalAlignment="Center" 
+                                     AutoWordSelection="True" 
+                                     local:PlaceholderBehavior.PlaceholderText="00" 
+                                     local:PlaceholderBehavior.PlaceholderForeground="Gray" LostFocus="TextBox_LostFocus" MaxLength="2" PreviewGotKeyboardFocus="TextBox_GotKeyboardFocus" TabIndex="1010" TextChanged="MyTextBox_TextChanged"/>
+                            <TextBlock Grid.Column="3" Grid.Row="1" Text="." VerticalAlignment="Center"/>
+                            <TextBox x:Name="Race_Ms" Grid.Column="4" Grid.Row="1" MinWidth="32" VerticalAlignment="Center" 
+                                     HorizontalAlignment="Center" 
+                                     MaxLength="2"
+                                     AutoWordSelection="True" 
+                                     local:PlaceholderBehavior.PlaceholderText="00"
+                                     local:PlaceholderBehavior.PlaceholderForeground="Gray" PreviewLostKeyboardFocus="Lap1_Ms_PreviewLostKeyboardFocus" TabIndex="1011" TextChanged="MyTextBox_TextChanged" GotKeyboardFocus="Race_Ms_GotKeyboardFocus" />
+                            <TextBlock x:Name="AverageRace_Speed" Text="0.00" Grid.Column="6" Grid.Row="1" MinWidth="32"
+                                       Margin="8,0,0,0" VerticalAlignment="Center"/>
+                            <TextBlock x:Name="Speed_Text" Text="{Binding Source={x:Static p:Settings.Default}, Path=speed, Mode=OneWay}"
+                                       Grid.Row="1" Grid.Column="7" Margin="4,0,0,0"
+                                       HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Grid>
+                    </GroupBox>
+                    <GroupBox x:Name="avgLapGroupBox" Header="Average Lap" Grid.Row="1">
+                        <TextBlock Text="{Binding}" x:Name="average_LapTime" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </GroupBox>
+                    <GroupBox x:Name="PointsGroupBox" Header="Points" Grid.Row="2" VerticalAlignment="Center" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Height="87">
+                        <DockPanel HorizontalAlignment="Center" >
+                            <TextBox x:Name="PointsTextBlock" MinWidth="100" TabIndex="1012" />
+                            <TextBlock x:Name="rdc" VerticalAlignment="Center"/>
+                            <Border x:Name="PointsRecordDivider" Width="1" Margin="5,0" Background="Red"/>
+                            <TextBlock x:Name="PointsRecordTextBlock" Text="High score: " Margin="5,0" HorizontalAlignment="Center" VerticalAlignment="Center" />
+                        </DockPanel>
+                    </GroupBox>
+                    <StackPanel Grid.Row="3" x:Name="GroupButtons" Orientation="Horizontal" UseLayoutRounding="True" VerticalAlignment="Center" HorizontalAlignment="Left" Margin="3,8">
+                        <CheckBox x:Name="retry" TabIndex="1007" VerticalAlignment="Center" Foreground="Black"
+                                  Checked="RunRetention_Checked" AutomationProperties.Name="Retry"
+                                  ToolTip="Keep the same event, car, weather and direction for the next run."/>
+                        <TextBlock Text="Retry?" 
+                                   FontSize="16" 
+                                   Foreground="#FFBBBBBB" 
+                                   FontWeight="Bold" 
+                                   Margin="2,0,20,0" 
+                                   MouseLeftButtonDown="Retry_MouseLeftButtonDown" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   ToolTip="{Binding ToolTip, ElementName=retry}"/>
+                        <CheckBox x:Name="keep" TabIndex="1007" VerticalAlignment="Center" Foreground="Black"
+                                  Checked="RunRetention_Checked" AutomationProperties.Name="Keep Choices"
+                                  ToolTip="Keep the event, weather and direction and select the next car in the dropdown after saving."/>
+                        <TextBlock Text="Keep Choices?" 
+                                   FontSize="16" 
+                                   Foreground="#FFBBBBBB" 
+                                   FontWeight="Bold" 
+                                   Margin="2,0,0,0" 
+                                   MouseLeftButtonDown="KeepChoices_MouseLeftButtonDown" VerticalAlignment="Center" HorizontalAlignment="Center"
+                                   ToolTip="{Binding ToolTip, ElementName=keep}"/>
+                    </StackPanel>
+                    <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="3,10,3,3" HorizontalAlignment="Stretch">
+                    <Button x:Name="btn_reset" Content="Reset" Click="Btn_reset_Click" TabIndex="1014" MinWidth="105"
+                            Style="{DynamicResource AppSecondaryButtonStyle}"/>
+                    <Button x:Name="btn_submit" Content="Submit" Click="Btn_submit_Click" GotFocus="Btn_submit_GotFocus" TabIndex="1013" MinWidth="185"
+                            Style="{DynamicResource AppPrimaryButtonStyle}"/>
+                    </StackPanel>
+                    <!--<ToggleButton Style="{StaticResource CustomToggleButtonStyle}" x:Name="btn_loadrec_Metric" IsEnabled="false" Content="Load Records" TabIndex="23" FontWeight="Bold" FontSize="18" Click="Btn_loadrec_Click" Margin="5,0,5,0" Visibility="Collapsed"/>
+                    <ToggleButton Style="{StaticResource CustomToggleButtonStyle}" x:Name="btn_loadrec_Imperial" IsEnabled="false" Content="Load Records" TabIndex="23" FontWeight="Bold" FontSize="18" Click="Btn_loadrec_Click" Visibility="Collapsed" Margin="5,0,5,0" />-->
+                </Grid>
+            </GroupBox>
+
+            <Border x:Name="EmbeddedContentSurface" Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+                    Height="{DynamicResource AppEmbeddedContentHeight}" Margin="0,4,0,4"
+                    Visibility="Collapsed" Panel.ZIndex="20" ClipToBounds="True"
+                    BorderBrush="{DynamicResource AppSectionBorderBrush}" BorderThickness="1">
+                <ContentControl x:Name="EmbeddedContentHost"
+                                HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch"/>
+            </Border>
+
+            <Border Grid.Row="4" Grid.Column="1" Grid.ColumnSpan="3"
+                    Background="#FF0C0E12" BorderBrush="#FF333539" BorderThickness="1,1,1,0"
+                    Padding="8,2">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                    <StackPanel Orientation="Horizontal" Grid.Column="0">
+                        <TextBlock x:Name="HudStatusVersion" Foreground="{DynamicResource AppTitleForegroundBrush}" FontSize="10" FontWeight="SemiBold"/>
+                        <TextBlock Text="  |  Target Island: " Foreground="{DynamicResource AppMutedForegroundBrush}" FontSize="10"/>
+                        <TextBlock Text="{Binding Text, ElementName=combo_Island}" Foreground="{DynamicResource AppTitleForegroundBrush}" FontSize="10"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="1" Text="READY" Foreground="#FFFFB4AA" FontSize="10" FontWeight="Bold"/>
+                    <StackPanel Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Right">
+                        <TextBlock Text="DPI-aware layout  |  " Foreground="{DynamicResource AppMutedForegroundBrush}" FontSize="10"/>
+                        <TextBlock x:Name="HudResolutionText" Foreground="{DynamicResource AppTitleForegroundBrush}" FontSize="10"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+
+            <!--<DataGrid Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+                          x:Name="ViewEntries_Metric"
+                          Width="Auto" MinWidth="400"
+                          Height="300" MinHeight="100"
+                          GridLinesVisibility="None"
+                          LoadingRow="DataGrid_LoadingRow"
+                          IsSynchronizedWithCurrentItem="True" 
+                          IsReadOnly="True"
+                          VerticalAlignment="Top"
+                          CanUserResizeRows="False"
+                          CanUserAddRows="False"
+                          SelectionUnit="Cell"
+                          CanUserReorderColumns="False"
+                          AlternatingRowBackground="#FF606060" AlternationCount="-1"
+                          AutoGenerateColumns="False"
+                          FontSize="16"
+                          Background="#FF2B2B2B" Foreground="White"
+                          Margin="0,10,0,0" EnableRowVirtualization="False"
+                          BorderBrush="Red" RowDetailsVisibilityMode="Visible" BorderThickness="3">
+
+                <DataGrid.Columns>
+                    <DataGridTextColumn x:Name="carName_Metric" Binding="{Binding carName}" Header="Name" Width="Auto"/>
+                    <DataGridTextColumn x:Name="carClass_Metric" Binding="{Binding carClass}" Header="Class" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="fLap_Metric" Binding="{Binding Fastest_Lap}" Header="Fastest Lap" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="avgHigher_Metric" Binding="{Binding Higher_Avg_Metric}" Header="Avg. Speed" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="weatherConditions" Binding="{Binding Average_Lap}" Header="Avg. Lap" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="avgSpeed_Metric" Binding="{Binding Total_Time}" Header="Total Time" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+            <DataGrid Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="3"
+                          Visibility="Collapsed"
+                          x:Name="ViewEntries_Imperial"
+                          Width="Auto" MinWidth="400"
+                          Height="300" MinHeight="100"
+                          GridLinesVisibility="None"
+                          LoadingRow="DataGrid_LoadingRow"
+                          IsSynchronizedWithCurrentItem="True" 
+                          IsReadOnly="True"
+                          VerticalAlignment="Top"
+                          CanUserResizeRows="False"
+                          CanUserAddRows="False"
+                          SelectionUnit="Cell"
+                          CanUserReorderColumns="False"
+                          AlternatingRowBackground="#FF606060" AlternationCount="-1"
+                          AutoGenerateColumns="False"
+                          FontSize="16"
+                          Background="#FF2B2B2B" Foreground="White"
+                          Margin="0,10,0,0" EnableRowVirtualization="False"
+                          BorderBrush="Red" RowDetailsVisibilityMode="Visible" BorderThickness="3">>
+                <DataGrid.Resources>
+                    <Style BasedOn="{StaticResource {x:Type DataGridColumnHeader}}" TargetType="{x:Type DataGridColumnHeader}">
+                        <Setter Property="Background" Value="#FF606060" />
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        <Setter Property="Margin" Value="2,0,0,0"/>
+                        <Setter Property="Padding" Value="5"/>
+                        <Setter Property="BorderBrush" Value="Black"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                    </Style>
+                    <Style BasedOn="{StaticResource {x:Type DataGridRowHeader}}" TargetType="{x:Type DataGridRowHeader}">
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                        <Setter Property="HorizontalAlignment" Value="Center"/>
+                        <Setter Property="Margin" Value="0,0,0,0"/>
+                        <Setter Property="Padding" Value="5,0"/>
+                        <Setter Property="BorderBrush" Value="Black"/>
+                        <Setter Property="BorderThickness" Value="0,0,1,0"/>
+                    </Style>
+                    <Style BasedOn="{StaticResource {x:Type DataGridRow}}" TargetType="{x:Type DataGridRow}">
+                        <Setter Property="Background" Value="#FF2B2B2B"/>
+                        <Setter Property="BorderBrush" Value="Black"/>
+                        <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                    </Style>
+                    <Style BasedOn="{StaticResource {x:Type DataGridCell}}" TargetType="{x:Type DataGridCell}">
+                        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    </Style>
+                </DataGrid.Resources>
+                <DataGrid.Columns>
+                    <DataGridTextColumn x:Name="carName_Imperial" Binding="{Binding carName}" Header="Name" Width="Auto"/>
+                    <DataGridTextColumn x:Name="carClass_Imperial" Binding="{Binding carClass}" Header="Class" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="fLap_Imperial" Binding="{Binding Fastest_Lap}" Header="Fastest Lap" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="avgHigher_Imperial" Binding="{Binding Higher_Avg_Imperial}" Header="Avg. Speed" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="avgSpeed_Imperial" Binding="{Binding Total_Time}" Header="Avg. Speed" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="weather" Binding="{Binding conditions}" Header="Conditions" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                    <DataGridTextColumn x:Name="orientation" Binding="{Binding orientation}" Header="Orientation" Width="Auto">
+                        <DataGridTextColumn.CellStyle>
+                            <Style>
+                                <Setter Property="TextBlock.TextAlignment" Value="Center" />
+                            </Style>
+                        </DataGridTextColumn.CellStyle>
+                    </DataGridTextColumn>
+                </DataGrid.Columns>
+            </DataGrid>-->
+        </Grid>
+    </Border>
+    </Viewbox>
+</Window>

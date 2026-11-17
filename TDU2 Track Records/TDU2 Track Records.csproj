@@ -1,0 +1,685 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{E5D4C98B-241A-4DA8-8261-2DD500777FBF}</ProjectGuid>
+    <OutputType>WinExe</OutputType>
+    <RootNamespace>TDU2_Track_Records</RootNamespace>
+    <AssemblyName>TDU2 Track Records Public</AssemblyName>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
+    <WarningLevel>4</WarningLevel>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
+    <IsWebBootstrapper>false</IsWebBootstrapper>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
+    <PublishUrl>publish\</PublishUrl>
+    <Install>true</Install>
+    <InstallFrom>Disk</InstallFrom>
+    <UpdateEnabled>false</UpdateEnabled>
+    <UpdateMode>Foreground</UpdateMode>
+    <UpdateInterval>7</UpdateInterval>
+    <UpdateIntervalUnits>Days</UpdateIntervalUnits>
+    <UpdatePeriodically>false</UpdatePeriodically>
+    <UpdateRequired>false</UpdateRequired>
+    <MapFileExtensions>false</MapFileExtensions>
+    <TargetCulture>en</TargetCulture>
+    <ProductName>TDU2 Track Records Public</ProductName>
+    <PublisherName>MoDuLah</PublisherName>
+    <SuiteName>TDU2</SuiteName>
+    <OpenBrowserOnPublish>false</OpenBrowserOnPublish>
+    <ApplicationRevision>0</ApplicationRevision>
+    <ApplicationVersion>2.4.0.%2a</ApplicationVersion>
+    <UseApplicationTrust>true</UseApplicationTrust>
+    <CreateDesktopShortcut>true</CreateDesktopShortcut>
+    <PublishWizardCompleted>true</PublishWizardCompleted>
+    <BootstrapperEnabled>true</BootstrapperEnabled>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <UseWinFormsOutOfProcDesigner>True</UseWinFormsOutOfProcDesigner>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
+    <GenerateSerializationAssemblies>On</GenerateSerializationAssemblies>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisIgnoreGeneratedCode>false</CodeAnalysisIgnoreGeneratedCode>
+    <RunCodeAnalysis>false</RunCodeAnalysis>
+    <UseWinFormsOutOfProcDesigner>True</UseWinFormsOutOfProcDesigner>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>TDU2.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup>
+    <TargetZone>LocalIntranet</TargetZone>
+  </PropertyGroup>
+  <PropertyGroup>
+    <GenerateManifests>false</GenerateManifests>
+  </PropertyGroup>
+  <PropertyGroup />
+  <PropertyGroup>
+    <StartupObject>TDU2_Track_Records.App</StartupObject>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.ComponentModel.DataAnnotations" />
+    <Reference Include="System.Configuration" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml.Linq" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Net.Http" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+  </ItemGroup>
+  <ItemGroup>
+    <ApplicationDefinition Include="App.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </ApplicationDefinition>
+    <Compile Include="AppState.cs" />
+    <Compile Include="EventCatalog.cs" />
+    <Compile Include="ThemeManager.cs" />
+    <Compile Include="LocationMenu.cs" />
+    <Compile Include="CircularProgressBar.xaml.cs">
+      <DependentUpon>CircularProgressBar.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Classes\ByteArrayToImageSourceConverter.cs" />
+    <Compile Include="Classes\Points.cs" />
+    <Compile Include="Classes\StringToDoubleConverter.cs" />
+    <Compile Include="Classes\DVLA.cs" />
+    <Compile Include="dealerships.xaml.cs">
+      <DependentUpon>dealerships.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="AppNotice.cs" />
+    <Compile Include="houses.xaml.cs">
+      <DependentUpon>houses.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="LapInputWindow.xaml.cs">
+      <DependentUpon>LapInputWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Model\Lap.cs" />
+    <Compile Include="Model\VehicleModel.cs" />
+    <Compile Include="ObjectivesWindow.xaml.cs">
+      <DependentUpon>ObjectivesWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="powerlap.xaml.cs">
+      <DependentUpon>powerlap.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="SubCategoryCard.xaml.cs">
+      <DependentUpon>SubCategoryCard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Vehicled.cs" />
+    <Compile Include="vehicleCard.xaml.cs">
+      <DependentUpon>vehicleCard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="ViewModels\RaceDataViewModel.cs" />
+    <Compile Include="SettingsWindow.xaml.cs">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="SaveGameGarageImport.cs" />
+    <Compile Include="SaveObjectiveSync.cs" />
+    <Compile Include="tracks.xaml.cs">
+      <DependentUpon>tracks.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="UnitConverter.cs" />
+    <Compile Include="MeasurementUnits.cs" />
+    <Compile Include="VehicleDetails.cs" />
+    <Compile Include="ViewModels\powerlapViewModel.cs" />
+    <Compile Include="ViewModels\vehicleCardViewModel.cs" />
+    <Page Include="CircularProgressBar.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="dealerships.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="houses.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="LapInputWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="MainWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Compile Include="App.xaml.cs">
+      <DependentUpon>App.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="MainWindow.xaml.cs">
+      <DependentUpon>MainWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Page Include="ObjectivesWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="powerlap.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SettingsWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="SubCategoryCard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Themes\CheckBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\Appearance\Hud.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\DatePicker.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\ListBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\ToggleButton.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\Button.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\ComboBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\DataGrid.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\GroupBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\Menu.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\ProgressBar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\ScrollBar.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\TabControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\TabItem.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\TextBox.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\ToolTip.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\TreeView.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="tracks.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="vehicleCard.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Classes\PlaceholderBehavior.cs" />
+    <Compile Include="Properties\AssemblyInfo.cs">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Properties\Settings.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DependentUpon>Settings.settings</DependentUpon>
+      <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Resource Include="Images\ico\navigation\restore.png" />
+    <Resource Include="Images\ico\navigation\restore_over.png" />
+    <Resource Include="Images\ico\navigation\maximize.png" />
+    <Resource Include="Images\ico\navigation\maximize_over.png" />
+    <Resource Include="Images\dealerships\Hawaii\Solar Crown.png" />
+    <Resource Include="Images\dealerships\Ibiza\Solar Crown.png" />
+    <Resource Include="Images\dealerships\Hawaii\Rival.png" />
+    <Resource Include="Images\dealerships\Ibiza\Rival.png" />
+    <Resource Include="Images\dealerships\Hawaii\Casino.png" />
+    <Resource Include="Images\dealerships\Hawaii\Police.png" />
+    <Resource Include="Images\dealerships\Hawaii\Wreck.png" />
+    <Resource Include="Images\dealerships\Ibiza\Casino.png" />
+    <Resource Include="Images\dealerships\Ibiza\Police.png" />
+    <Resource Include="Images\dealerships\Ibiza\Wreck.png" />
+    <Resource Include="Images\dealerships\Hawaii\Club.png" />
+    <Resource Include="Images\dealerships\Hawaii\Racing School Asphalt.png" />
+    <Resource Include="Images\dealerships\Hawaii\Racing School Classic.png" />
+    <Resource Include="Images\dealerships\Hawaii\Racing School Dirt.png" />
+    <Resource Include="Images\dealerships\Ibiza\Club.png" />
+    <Resource Include="Images\dealerships\Ibiza\Racing School Asphalt.png" />
+    <Resource Include="Images\dealerships\Ibiza\Racing School Classic.png" />
+    <Resource Include="Images\dealerships\Ibiza\Racing School Dirt.png" />
+    <Resource Include="Images\dealerships\default.png" />
+    <Resource Include="Images\dealerships\Hawaii\Asian Cars.png" />
+    <Resource Include="Images\dealerships\Ibiza\Asian Cars.png" />
+    <Resource Include="Images\dealerships\Hawaii\British Cars %28east%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\British Cars %28east%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\Audi %28east%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\Audi %28north%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\Audi %28south%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\Audi %28west%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\British Cars %28north%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\British Cars %28north%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\British Cars %28west%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\British Cars %28west%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\British Cars.png" />
+    <Resource Include="Images\dealerships\Ibiza\British Cars.png" />
+    <Resource Include="Images\dealerships\Hawaii\European Cars %28east%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\European Cars %28east%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\European Cars %28north%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\European Cars %28South%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\European Cars %28south%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\European Cars %28west%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\European Classic.png" />
+    <Resource Include="Images\dealerships\Ibiza\European Classic.png" />
+    <Resource Include="Images\dealerships\Ibiza\Ferrari %28north%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\Ferrari %28west%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\Ferrari %28east%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\Ferrari %28south%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\Italian Cars %28east%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\Italian Cars %28north%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\Italian Cars %28south%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\Italian Cars %28west%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\Italian Classic.png" />
+    <Resource Include="Images\dealerships\Ibiza\Italian Classic.png" />
+    <Resource Include="Images\dealerships\Hawaii\Mercedes-Benz.png" />
+    <Resource Include="Images\dealerships\Ibiza\Mercedes-Benz.png" />
+    <Resource Include="Images\dealerships\Hawaii\Road Bikes.png" />
+    <Resource Include="Images\dealerships\Ibiza\Road Bikes.png" />
+    <Resource Include="Images\dealerships\Hawaii\U.S. Cars %28north%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\U.S. Cars %28north%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\U.S. Cars %28south%29.png" />
+    <Resource Include="Images\dealerships\Ibiza\U.S. Cars %28south%29.png" />
+    <Resource Include="Images\dealerships\Hawaii\Used Car Dealership.png" />
+    <Resource Include="Images\dealerships\Ibiza\Used Car Dealership.png" />
+    <Resource Include="Images\dealerships\Hawaii\World Classic.png" />
+    <Resource Include="Images\dealerships\Ibiza\World Classic.png" />
+    <Resource Include="Images\houses\barber stilt house.png" />
+    <Resource Include="Images\houses\black point house.png" />
+    <Resource Include="Images\houses\cala moli residence.png" />
+    <Resource Include="Images\houses\caletes house.png" />
+    <Resource Include="Images\houses\caravan.png" />
+    <Resource Include="Images\houses\coconut beach house.png" />
+    <Resource Include="Images\houses\eivissa house.png" />
+    <Resource Include="Images\houses\falls house.png" />
+    <Resource Include="Images\houses\fontanelles house.png" />
+    <Resource Include="Images\houses\fujinoki residence.png" />
+    <Resource Include="Images\houses\honolulu loft.png" />
+    <Resource Include="Images\houses\honouliali village.png" />
+    <Resource Include="Images\houses\hoomaluhia paradise.png" />
+    <Resource Include="Images\houses\hui akikiki place.png" />
+    <Resource Include="Images\houses\hydro house.png" />
+    <Resource Include="Images\houses\kaakahi spring.png" />
+    <Resource Include="Images\houses\kahuku point paradise.png" />
+    <Resource Include="Images\houses\kahuku stilt house.png" />
+    <Resource Include="Images\houses\kaikaka paradise.png" />
+    <Resource Include="Images\houses\kaiuapuieho sun rise.png" />
+    <Resource Include="Images\houses\kalaeokakao jewel.png" />
+    <Resource Include="Images\houses\kaneohe loft.png" />
+    <Resource Include="Images\houses\kaneohe stilt house.png" />
+    <Resource Include="Images\houses\kaukonahua home.png" />
+    <Resource Include="Images\houses\keolo hills.png" />
+    <Resource Include="Images\houses\ko olina paradise.png" />
+    <Resource Include="Images\houses\lanikuhana village.png" />
+    <Resource Include="Images\houses\loch stilt house.png" />
+    <Resource Include="Images\houses\lokelani house.png" />
+    <Resource Include="Images\houses\lokoea village.png" />
+    <Resource Include="Images\houses\loophole haven of peace.png" />
+    <Resource Include="Images\houses\lost keaau house.png" />
+    <Resource Include="Images\houses\lumberjack house.png" />
+    <Resource Include="Images\houses\makapu%27u meditation.png" />
+    <Resource Include="Images\houses\mililani haven of peace.png" />
+    <Resource Include="Images\houses\mineral house.png" />
+    <Resource Include="Images\houses\mokuleia shack.png" />
+    <Resource Include="Images\houses\nanakuli loft.png" />
+    <Resource Include="Images\houses\pohakupu village.png" />
+    <Resource Include="Images\houses\porroig house.png" />
+    <Resource Include="Images\houses\portinatx residence.png" />
+    <Resource Include="Images\houses\puninoni village.png" />
+    <Resource Include="Images\houses\refuge house.png" />
+    <Resource Include="Images\houses\sa cala house.png" />
+    <Resource Include="Images\houses\salines mansion.png" />
+    <Resource Include="Images\houses\sandy beach dream.png" />
+    <Resource Include="Images\houses\sant jordi residence.png" />
+    <Resource Include="Images\houses\sant llorenc hacienda.png" />
+    <Resource Include="Images\houses\sant rafael hacienda.png" />
+    <Resource Include="Images\houses\santa eularia residence.png" />
+    <Resource Include="Images\houses\seaside apartment.png" />
+    <Resource Include="Images\houses\tennis house.png" />
+    <Resource Include="Images\houses\the orient.png" />
+    <Resource Include="Images\houses\tropical house.png" />
+    <Resource Include="Images\houses\turtle refuge.png" />
+    <Resource Include="Images\houses\wahiawa abode.png" />
+    <Resource Include="Images\houses\waihee terrace.png" />
+    <Resource Include="Images\houses\waimano home.png" />
+    <Resource Include="Images\houses\yachthawaii.png" />
+    <Resource Include="Images\houses\yachtibiza.png" />
+    <Resource Include="Images\houses\zenith loft.png" />
+    <Resource Include="Images\backgrounds\carbon.png" />
+    <Resource Include="Images\ico\objectives\ico_playing_with_people.png" />
+    <Resource Include="Images\ico\objectives\icons_cas_collection.png" />
+    <Resource Include="Images\ico\objectives\icons_cas_competition.png" />
+    <Resource Include="Images\ico\objectives\icons_cas_discovery.png" />
+    <Resource Include="Images\ico\objectives\icons_cas_social.png" />
+    <Resource Include="Images\ico\objectives\icons_collection.png" />
+    <Resource Include="Images\ico\objectives\icons_competition.png" />
+    <Resource Include="Images\ico\objectives\icons_discovery.png" />
+    <Resource Include="Images\ico\objectives\icons_global.png" />
+    <Resource Include="Images\ico\objectives\icons_social.png" />
+    <Resource Include="Images\ico\objectives\cat_0_over.png" />
+    <Resource Include="Images\ico\objectives\cat_1_over.png" />
+    <Resource Include="Images\ico\objectives\cat_2_over.png" />
+    <Resource Include="Images\ico\objectives\cat_3_over.png" />
+    <Resource Include="Images\ico\objectives\cat_4_over.png" />
+    <Resource Include="Images\ico\objectives\cat_0.png" />
+    <Resource Include="Images\ico\objectives\cat_1.png" />
+    <Resource Include="Images\ico\objectives\cat_2.png" />
+    <Resource Include="Images\ico\objectives\cat_3.png" />
+    <Resource Include="Images\ico\objectives\cat_4.png" />
+    <Resource Include="Images\ico\categories\ico_cat0.png" />
+    <Resource Include="Images\vehicleCard\accKph.png" />
+    <Resource Include="Images\vehicleCard\accMph.png" />
+    <Resource Include="Images\houses\placeholder.png" />
+    <Resource Include="Images\vehicleCard\mA1.png" />
+    <Resource Include="Images\vehicleCard\mA2.png" />
+    <Resource Include="Images\vehicleCard\C1.png" />
+    <Resource Include="Images\vehicleCard\C4.png" />
+    <Resource Include="Images\vehicleCard\B1.png" />
+    <None Include="TDU2 Track Records.ruleset" />
+    <Resource Include="Images\ico\navigation\crc_over.png" />
+    <Resource Include="Images\ico\navigation\crc.png" />
+    <Resource Include="Images\ico\navigation\leaderboard.png" />
+    <Resource Include="Images\ico\navigation\leaderboard_over.png" />
+    <Resource Include="TDU2.ico" />
+    <Resource Include="Images\Restore.png" />
+    <Resource Include="Images\Save.png" />
+    <Resource Include="Images\backgrounds\dealership1.png" />
+    <Resource Include="Images\backgrounds\dealershipbg.png" />
+    <Resource Include="Images\backgrounds\housesbg.png" />
+    <Resource Include="Images\vehicleCard\accel2.png" />
+    <Resource Include="Images\vehicleCard\statbar.png" />
+    <Resource Include="Images\vehicleCard\statbarsbg.png" />
+    <Resource Include="Images\vehicleCard\chassis-4wd.png" />
+    <Resource Include="Images\vehicleCard\A1.png" />
+    <Resource Include="Images\vehicleCard\A2.png" />
+    <Resource Include="Images\vehicleCard\A3.png" />
+    <Resource Include="Images\vehicleCard\A4.png" />
+    <Resource Include="Images\vehicleCard\A5.png" />
+    <Resource Include="Images\vehicleCard\A6.png" />
+    <Resource Include="Images\vehicleCard\A7.png" />
+    <Resource Include="Images\vehicleCard\B2.png" />
+    <Resource Include="Images\vehicleCard\B3.png" />
+    <Resource Include="Images\vehicleCard\B4.png" />
+    <Resource Include="Images\vehicleCard\C2.png" />
+    <Resource Include="Images\vehicleCard\C3.png" />
+    <Resource Include="Images\vehicleCard\cant_sticker.png" />
+    <Resource Include="Images\vehicleCard\can_sticker.png" />
+    <Resource Include="Images\vehicleCard\can_tune.png" />
+    <Resource Include="Images\vehicleCard\accelKPH.png" />
+    <Resource Include="Images\vehicleCard\brake.png" />
+    <Resource Include="Images\vehicleCard\cant_paint.png" />
+    <Resource Include="Images\vehicleCard\cant_tune.png" />
+    <Resource Include="Images\vehicleCard\can_paint.png" />
+    <Resource Include="Images\vehicleCard\chassis-base.png" />
+    <Resource Include="Images\vehicleCard\chassis-feng.png" />
+    <Resource Include="Images\vehicleCard\chassis-fwd.png" />
+    <Resource Include="Images\vehicleCard\chassis-meng.png" />
+    <Resource Include="Images\vehicleCard\chassis-reng.png" />
+    <Resource Include="Images\vehicleCard\chassis-rwd.png" />
+    <Resource Include="Images\vehicleCard\engine.png" />
+    <Resource Include="Images\vehicleCard\mass.png" />
+    <Resource Include="Images\vehicleCard\mass_power.png" />
+    <Resource Include="Images\vehicleCard\numback.png" />
+    <Resource Include="Images\vehicleCard\power.png" />
+    <Resource Include="Images\vehicleCard\shifter.png" />
+    <Resource Include="Images\vehicleCard\speedo.png" />
+    <Resource Include="Images\vehicleCard\statbars.png" />
+    <Resource Include="Images\vehicleCard\tire.png" />
+    <Resource Include="Images\vehicleCard\Tune0.png" />
+    <Resource Include="Images\vehicleCard\Tune1.png" />
+    <Resource Include="Images\vehicleCard\Tune2.png" />
+    <Resource Include="Images\vehicleCard\Tune3.png" />
+    <Resource Include="Images\vehicleCard\Tune4.png" />
+    <Resource Include="Images\vehicleCard\wheel_green.png" />
+    <Resource Include="Images\vehicleCard\wheel_off.png" />
+    <Resource Include="Images\vehicleCard\wheel_red.png" />
+    <Resource Include="Images\vehicleCard\wheel_yellow.png" />
+    <Resource Include="Images\ico\events\ico_mp_race.png" />
+    <Resource Include="Images\ico\upgrades\stage4.png" />
+    <Resource Include="Images\ico\objectives\crc.png" />
+    <Resource Include="Images\ico\objectives\houseproper.png" />
+    <Resource Include="Images\ico\objectives\ico_casino.png" />
+    <Resource Include="Images\ico\objectives\ico_casino_games.png" />
+    <Resource Include="Images\ico\objectives\ico_casino_racing.png" />
+    <Resource Include="Images\ico\objectives\ico_championships.png" />
+    <Resource Include="Images\ico\objectives\ico_chase.png" />
+    <Resource Include="Images\ico\objectives\ico_clothes.png" />
+    <Resource Include="Images\ico\objectives\ico_club.png" />
+    <Resource Include="Images\ico\objectives\ico_coop_challenges.png" />
+    <Resource Include="Images\ico\objectives\ico_cosmetic_clinic.png" />
+    <Resource Include="Images\ico\objectives\ico_crc.png" />
+    <Resource Include="Images\ico\objectives\ico_cups.png" />
+    <Resource Include="Images\ico\objectives\ico_duel.png" />
+    <Resource Include="Images\ico\objectives\ico_emotes_cocktails.png" />
+    <Resource Include="Images\ico\objectives\ico_events.png" />
+    <Resource Include="Images\ico\objectives\ico_exclusive_rewards.png" />
+    <Resource Include="Images\ico\objectives\ico_features_and_actions.png" />
+    <Resource Include="Images\ico\objectives\ico_friends.png" />
+    <Resource Include="Images\ico\objectives\ico_haircuts.png" />
+    <Resource Include="Images\ico\objectives\ico_houses_and_furniture.png" />
+    <Resource Include="Images\ico\objectives\ico_instant_challenges.png" />
+    <Resource Include="Images\ico\objectives\ico_meeting_people.png" />
+    <Resource Include="Images\ico\objectives\ico_multiplayer_challenges.png" />
+    <Resource Include="Images\ico\objectives\ico_photographer.png" />
+    <Resource Include="Images\ico\objectives\ico_poker_cash.png" />
+    <Resource Include="Images\ico\objectives\ico_poker_tournament.png" />
+    <Resource Include="Images\ico\objectives\ico_racing_school.png" />
+    <Resource Include="Images\ico\objectives\ico_roads.png" />
+    <Resource Include="Images\ico\objectives\ico_roulette.png" />
+    <Resource Include="Images\ico\objectives\ico_shopping.png" />
+    <Resource Include="Images\ico\objectives\ico_sit_go.png" />
+    <Resource Include="Images\ico\objectives\ico_slot_machine.png" />
+    <Resource Include="Images\ico\objectives\ico_sticker_shop.png" />
+    <Resource Include="Images\ico\objectives\ico_treasure_hunts.png" />
+    <Resource Include="Images\ico\objectives\ico_vehicles.png" />
+    <Resource Include="Images\ico\objectives\photo.png" />
+    <Resource Include="Images\ico\objectives\realestate.png" />
+    <Resource Include="Images\ico\navigation\close.png" />
+    <Resource Include="Images\ico\navigation\close_over.png" />
+    <Resource Include="Images\ico\navigation\dealership.png" />
+    <Resource Include="Images\ico\navigation\dealership_over.png" />
+    <Resource Include="Images\ico\navigation\garage.png" />
+    <Resource Include="Images\ico\navigation\garage_over.png" />
+    <Resource Include="Images\ico\navigation\house.png" />
+    <Resource Include="Images\ico\navigation\house_over.png" />
+    <Resource Include="Images\ico\navigation\minimize.png" />
+    <Resource Include="Images\ico\navigation\minimize_over.png" />
+    <Resource Include="Images\ico\navigation\objectives.png" />
+    <Resource Include="Images\ico\navigation\objectives_over.png" />
+    <Resource Include="Images\ico\navigation\settings.png" />
+    <Resource Include="Images\ico\navigation\settings_over.png" />
+    <Resource Include="Images\ico\events\ico_cup_eliminator.png" />
+    <Resource Include="Images\ico\events\ico_mp_ftl.png" />
+    <Resource Include="Images\ico\events\ico_mp_kyd.png" />
+    <Resource Include="Images\ico\events\ico_cup_race.png" />
+    <Resource Include="Images\ico\events\ico_cup_speedtrap.png" />
+    <Resource Include="Images\ico\events\ico_mp_speedtrap.png" />
+    <Resource Include="Images\ico\events\ico_cup_speed.png" />
+    <Resource Include="Images\ico\events\ico_mp_speed.png" />
+    <Resource Include="Images\ico\events\ico_cup_timeattack.png" />
+    <Resource Include="Images\ico\categories\ico_cat1.png" />
+    <Resource Include="Images\ico\categories\ico_cat1casino.png" />
+    <Resource Include="Images\ico\categories\ico_cat1casino_over.png" />
+    <Resource Include="Images\ico\categories\ico_cat1_over.png" />
+    <Resource Include="Images\ico\categories\ico_cat2.png" />
+    <Resource Include="Images\ico\categories\ico_cat2casino.png" />
+    <Resource Include="Images\ico\categories\ico_cat2casino_over.png" />
+    <Resource Include="Images\ico\categories\ico_cat2_over.png" />
+    <Resource Include="Images\ico\categories\ico_cat3.png" />
+    <Resource Include="Images\ico\categories\ico_cat3casino.png" />
+    <Resource Include="Images\ico\categories\ico_cat3casino_over.png" />
+    <Resource Include="Images\ico\categories\ico_cat3_over.png" />
+    <Resource Include="Images\ico\categories\ico_cat4.png" />
+    <Resource Include="Images\ico\categories\ico_cat4casino.png" />
+    <Resource Include="Images\ico\categories\ico_cat4casino_over.png" />
+    <Resource Include="Images\ico\categories\ico_cat4_over.png" />
+    <Resource Include="Images\minimize.png" />
+    <Resource Include="Images\minimize_over.png" />
+    <Resource Include="Images\close.png" />
+    <Resource Include="Images\close_over.png" />
+    <Resource Include="Images\add.png" />
+    <Resource Include="Images\Cancel.png" />
+    <Resource Include="Images\tdu2.ico" />
+    <Content Include="database.db">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="Properties\app.manifest" />
+    <None Include="Properties\Settings.settings">
+      <Generator>PublicSettingsSingleFileGenerator</Generator>
+      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config">
+      <SubType>Designer</SubType>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <BootstrapperPackage Include=".NETFramework,Version=v4.6.1">
+      <Visible>False</Visible>
+      <ProductName>Microsoft .NET Framework 4.6.1 %28x86 and x64%29</ProductName>
+      <Install>true</Install>
+    </BootstrapperPackage>
+    <BootstrapperPackage Include="Microsoft.Net.Framework.3.5.SP1">
+      <Visible>False</Visible>
+      <ProductName>.NET Framework 3.5 SP1</ProductName>
+      <Install>false</Install>
+    </BootstrapperPackage>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\BG.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\BG2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\carClasses\A1.png" />
+    <Resource Include="Images\carClasses\A2.png" />
+    <Resource Include="Images\carClasses\A3.png" />
+    <Resource Include="Images\carClasses\A4.png" />
+    <Resource Include="Images\carClasses\A5.png" />
+    <Resource Include="Images\carClasses\A6.png" />
+    <Resource Include="Images\carClasses\A7.png" />
+    <Resource Include="Images\carClasses\B1.png" />
+    <Resource Include="Images\carClasses\B2.png" />
+    <Resource Include="Images\carClasses\B3.png" />
+    <Resource Include="Images\carClasses\B4.png" />
+    <Resource Include="Images\carClasses\C1.png" />
+    <Resource Include="Images\carClasses\C2.png" />
+    <Resource Include="Images\carClasses\C3.png" />
+    <Resource Include="Images\carClasses\C4.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\anticlockwise.png" />
+    <Resource Include="Images\anticlockwise_over.png" />
+    <Resource Include="Images\clockwise.png" />
+    <Resource Include="Images\clockwise_over.png" />
+    <Resource Include="Images\info.png" />
+    <Resource Include="Images\info_over.png" />
+    <Resource Include="Images\rain.png" />
+    <Resource Include="Images\sun.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\powerLapbg.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\carClasses\mA1.png" />
+    <Resource Include="Images\carClasses\mA2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\carClasses\SC.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="Images\Offline.png" />
+    <Resource Include="Images\Online.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <PublishFile Include="database.db">
+      <Visible>False</Visible>
+      <Group>
+      </Group>
+      <TargetPath>
+      </TargetPath>
+      <PublishState>DataFile</PublishState>
+      <IncludeHash>True</IncludeHash>
+      <FileType>File</FileType>
+    </PublishFile>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Data.SQLite.Core">
+      <Version>1.0.118</Version>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+</Project>

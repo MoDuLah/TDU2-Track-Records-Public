@@ -1,0 +1,259 @@
+<Window x:Class="TDU2_Track_Records.ObjectivesWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:TDU2_Track_Records"
+        mc:Ignorable="d"
+        Title="Objectives" Width="1180" Height="660" MinWidth="900" MinHeight="600"
+        SizeToContent="Manual" ResizeMode="CanResize">
+
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition x:Name="SubCategoryRow" Height="*" />
+            <RowDefinition x:Name="ObjectiveDetailsRow" Height="0" />
+        </Grid.RowDefinitions>
+
+        <!-- TabControl in the first row of the grid -->
+        <TabControl Name="ObjectivesTabControl" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                    Grid.Row="0" SnapsToDevicePixels="True" SelectionChanged="ObjectivesTabControl_SelectionChanged">
+            <TabControl.Resources>
+                <Style TargetType="{x:Type TabPanel}">
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                </Style>
+                <Style x:Key="ObjectiveTabIcon" TargetType="{x:Type Image}">
+                    <Setter Property="Width" Value="60"/>
+                    <Setter Property="Height" Value="60"/>
+                    <Setter Property="Margin" Value="5,5,5,0"/>
+                    <Setter Property="Stretch" Value="Uniform"/>
+                    <Setter Property="HorizontalAlignment" Value="Center"/>
+                </Style>
+            </TabControl.Resources>
+            <!-- TabItem 1: Summary -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image Source="/Images/ico/objectives/cat_0.png" Style="{StaticResource ObjectiveTabIcon}"/>
+                        <TextBlock Text="Summary" HorizontalAlignment="Center"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
+                              Focusable="False" FocusVisualStyle="{x:Null}">
+                    <Border CornerRadius="20" Background="#FF161B1E" MaxWidth="760"
+                            Margin="10,12" Padding="10" VerticalAlignment="Top">
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="Auto"/>
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+
+                            <StackPanel Grid.Row="0" Grid.Column="0"
+                                        Margin="8" VerticalAlignment="Center">
+                                <local:CircularProgressBar x:Name="competitionProgress" Icon="/Images/ico/objectives/cat_1.png" StrokeColor="#FF2F91F5"/>
+                                <TextBlock x:Name="CompetitionTitle" Text="Trainee" Foreground="#FF2F91F5"
+                                           FontSize="18" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="CompetitionLevel" Text="0/15" Foreground="#FF2F91F5"
+                                           FontSize="18" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="2"
+                                        Margin="8" VerticalAlignment="Center">
+                                <local:CircularProgressBar x:Name="collectionProgress" Icon="/Images/ico/objectives/cat_2.png" StrokeColor="#FFA5C33B"/>
+                                <TextBlock x:Name="CollectionTitle" Text="Poor" Foreground="#FFA5C33B"
+                                           FontSize="18" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="CollectionLevel" Text="0/15" Foreground="#FFA5C33B"
+                                           FontSize="18" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="0"
+                                        Margin="8" VerticalAlignment="Center">
+                                <local:CircularProgressBar x:Name="discoveryProgress" Icon="/Images/ico/objectives/cat_3.png" StrokeColor="DarkOrange"/>
+                                <TextBlock x:Name="DiscoveryTitle" Text="Homebody" Foreground="DarkOrange"
+                                           FontSize="18" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="DiscoveryLevel" Text="0/15" Foreground="DarkOrange"
+                                           FontSize="18" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="1" Grid.Column="2"
+                                        Margin="8" VerticalAlignment="Center">
+                                <local:CircularProgressBar x:Name="socialProgress" Icon="/Images/ico/objectives/cat_4.png" StrokeColor="HotPink"/>
+                                <TextBlock x:Name="SocialTitle" Text="Lonely" Foreground="HotPink"
+                                           FontSize="18" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="SocialLevel" Text="0/15" Foreground="HotPink"
+                                           FontSize="18" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                            <StackPanel Grid.Row="0" Grid.Column="1" Grid.RowSpan="2"
+                                        Margin="8" VerticalAlignment="Center">
+                                <local:CircularProgressBar x:Name="globalLevelProgress" Icon="/Images/ico/objectives/cat_0.png" StrokeColor="Gold"/>
+                                <TextBlock x:Name="GlobalTitle" Text="Global Level" Foreground="White"
+                                           FontSize="18" HorizontalAlignment="Center" Margin="0,4,0,0"/>
+                                <TextBlock x:Name="GlobalLevel" Text="1/73" Foreground="Gold"
+                                           FontSize="18" HorizontalAlignment="Center"/>
+                            </StackPanel>
+                        </Grid>
+                    </Border>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- TabItem 2: Competition -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image>
+                            <Image.Style>
+                                <Style TargetType="{x:Type Image}" BasedOn="{StaticResource ObjectiveTabIcon}">
+                                    <Setter Property="Source" Value="/Images/ico/objectives/cat_1.png"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Source" Value="/Images/ico/objectives/cat_1_over.png"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock x:Name="Tab1" Text="Competition" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="Tab1Type" Text="Normal" Visibility="Collapsed"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid x:Name="Tab1Grid">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="Tab1SubCategoryGrid" Columns="2" Margin="10" VerticalAlignment="Top"/>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- TabItem 3: Social -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image>
+                            <Image.Style>
+                                <Style TargetType="{x:Type Image}" BasedOn="{StaticResource ObjectiveTabIcon}">
+                                    <Setter Property="Source" Value="/Images/ico/objectives/cat_2.png"/>
+                                    <Style.Triggers>
+                                        <Trigger Property="IsMouseOver" Value="True">
+                                            <Setter Property="Source" Value="/Images/ico/objectives/cat_1_over.png"/>
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </Image.Style>
+                        </Image>
+                        <TextBlock x:Name="Tab2" Text="Collection" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="Tab2Type" Text="Normal" Visibility="Collapsed"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid x:Name="Tab2Grid">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="Tab2SubCategoryGrid" Columns="2" Margin="10" VerticalAlignment="Top"/>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- TabItem 4: Discovery -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image Source="/Images/ico/objectives/cat_3.png" Style="{StaticResource ObjectiveTabIcon}"/>
+                        <TextBlock x:Name="Tab3" Text="Discovery" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="Tab3Type" Text="Normal" Visibility="Collapsed"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid x:Name="Tab3Grid">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="Tab3SubCategoryGrid" Columns="2" Margin="10" VerticalAlignment="Top" />
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- TabItem 5: Collection -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image Source="/Images/ico/objectives/cat_4.png" Style="{StaticResource ObjectiveTabIcon}"/>
+                        <TextBlock x:Name="Tab4" Text="Social" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="Tab4Type" Text="Normal" Visibility="Collapsed"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid x:Name="Tab4Grid">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="Tab4SubCategoryGrid" Columns="2" Margin="10" VerticalAlignment="Top" />
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- TabItem 6: Competition (Casino) -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image Source="/Images/ico/categories/ico_cat1casino.png" Style="{StaticResource ObjectiveTabIcon}"/>
+                        <TextBlock x:Name="Tab5" Text="Competition" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="Tab5Type" Text="Casino" Visibility="Collapsed"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid x:Name="Tab5Grid">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="Tab5SubCategoryGrid" Columns="2" Margin="10" VerticalAlignment="Top"/>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- TabItem 7: Social (Casino) -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image Source="/Images/ico/categories/ico_cat2casino.png" Style="{StaticResource ObjectiveTabIcon}"/>
+                        <TextBlock x:Name="Tab6" Text="Collection" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="Tab6Type" Text="Casino" Visibility="Collapsed"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid x:Name="Tab6Grid">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="Tab6SubCategoryGrid" Columns="2" Margin="10" VerticalAlignment="Top"/>
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- TabItem 8: Discovery (Casino) -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image Source="/Images/ico/categories/ico_cat3casino.png" Style="{StaticResource ObjectiveTabIcon}"/>
+                        <TextBlock x:Name="Tab7" Text="Discovery" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="Tab7Type" Text="Casino" Visibility="Collapsed"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid x:Name="Tab7Grid">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="Tab7SubCategoryGrid" Columns="2" Margin="10" VerticalAlignment="Top" />
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+
+            <!-- TabItem 9: Collection (Casino) -->
+            <TabItem>
+                <TabItem.Header>
+                    <StackPanel>
+                        <Image Source="/Images/ico/categories/ico_cat4casino.png" Style="{StaticResource ObjectiveTabIcon}"/>
+                        <TextBlock x:Name="Tab8" Text="Social" HorizontalAlignment="Center"/>
+                        <TextBlock x:Name="Tab8Type" Text="Casino" Visibility="Collapsed"/>
+                    </StackPanel>
+                </TabItem.Header>
+                <Grid x:Name="Tab8Grid">
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <UniformGrid x:Name="Tab8SubCategoryGrid" Columns="2" Margin="10" VerticalAlignment="Top" />
+                    </ScrollViewer>
+                </Grid>
+            </TabItem>
+        </TabControl>
+
+        <!-- ScrollViewer in the second row of the grid -->
+        <ScrollViewer Grid.Row="1" x:Name="ObjectiveScrollViewer" Visibility="Collapsed" FocusVisualStyle="{x:Null}"
+                      VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Margin="10">
+            <StackPanel x:Name="ObjectiveScrollViewerContent" />
+        </ScrollViewer>
+
+    </Grid>
+</Window>
