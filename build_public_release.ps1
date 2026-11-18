@@ -37,7 +37,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "The Release verification failed."
 }
 
-$artifactName = "TDU2-Track-Records-Public-v2.5.0-win"
+$artifactName = "TDU2-Track-Records-Public-v2.5.1-win"
 $stageRoot = Join-Path (Join-Path $artifactsRoot ([guid]::NewGuid().ToString("N"))) "TDU2 Track Records Public"
 $zipPath = Join-Path $artifactsRoot ($artifactName + ".zip")
 $releaseFiles = @(

@@ -252,6 +252,7 @@ namespace TDU2_Track_Records
             cardLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(150) });
             cardLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             cardLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            cardLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
             Grid header = new Grid { Background = new SolidColorBrush(Color.FromRgb(37, 39, 44)) };
             header.ColumnDefinitions.Add(new ColumnDefinition());
@@ -317,6 +318,13 @@ namespace TDU2_Track_Records
             Grid.SetRow(metrics, 2);
             cardLayout.Children.Add(metrics);
 
+            FrameworkElement paintPreview = FactoryPaintPreview.Create(vehicle.id);
+            if (paintPreview != null)
+            {
+                Grid.SetRow(paintPreview, 3);
+                cardLayout.Children.Add(paintPreview);
+            }
+
             Grid actions = new Grid { Margin = new Thickness(10, 0, 10, 10) };
             actions.ColumnDefinitions.Add(new ColumnDefinition());
             actions.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
@@ -330,7 +338,7 @@ namespace TDU2_Track_Records
             viewDetailsButton.Click += ViewDetailsButton_Click;
             Grid.SetColumn(viewDetailsButton, 1);
             actions.Children.Add(viewDetailsButton);
-            Grid.SetRow(actions, 3);
+            Grid.SetRow(actions, 4);
             cardLayout.Children.Add(actions);
 
             vehicleCard.Child = cardLayout;

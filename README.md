@@ -20,6 +20,12 @@ that database in place. If you already logged laps in public v2.4.0, back up its
 file to the new location if there is no database there. Keep both copies if you
 already have a database at the new location.
 
+Dealership cards include factory paint swatches. Hover over a swatch for the
+paint name and extra cost. Two-tone paints show both colours. Swatches approximate
+the base colour; metallic, pearl and texture effects vary in game. A question mark
+indicates a finish with no resolved colour preview. The bundled factory choices
+come from the TDUWorld catalogue used for this build.
+
 ## Build from source
 
 Install Visual Studio with the **.NET desktop development** workload and the
