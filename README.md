@@ -26,6 +26,15 @@ the base colour; metallic, pearl and texture effects vary in game. A question ma
 indicates a finish with no resolved colour preview. The bundled factory choices
 come from the TDUWorld catalogue used for this build.
 
+## Updates and database maintenance
+
+Settings has an on-demand check for GitHub releases, verified update downloads,
+and SQLite integrity, backup and optimisation tools. Update downloads are staged
+in a separate folder beside the active database. For releases that include
+individual update assets, Track Records downloads only files whose SHA-256 hashes
+differ from the installed files. The Windows ZIP is the fallback. A schema
+comparison suggests a data migration when a release expects a different schema.
+
 ## Build from source
 
 Install Visual Studio with the **.NET desktop development** workload and the
@@ -34,3 +43,6 @@ Install Visual Studio with the **.NET desktop development** workload and the
 `./build_public_release.ps1` to build the decoder and the application and create the
 portable ZIP in `artifacts`. See [third-party notices](THIRD_PARTY_NOTICES.md) for
 the decoder licence.
+
+To enable individual update downloads, attach the files inside the generated
+`*-update-assets` folder to the same GitHub release as the Windows ZIP.

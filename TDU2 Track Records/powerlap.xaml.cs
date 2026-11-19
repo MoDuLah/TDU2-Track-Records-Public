@@ -2,27 +2,26 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
+using System.IO;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
-using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Microsoft.Win32;
 using TDU2_Track_Records.Properties;
-using System.ComponentModel;
 
 namespace TDU2_Track_Records
 {
-    public partial class powerlap : Window
+    public partial class powerlap : UserControl
     {
         private readonly string connectionString = Settings.Default.connectionString;
-        private PowerLapViewModel viewModel;
-
+        private List<Lap> shownLaps;
 
         public powerlap()
         {
             InitializeComponent();
+            // Keep selector styles stable when navigation detaches the page.
             ThemeManager.ApplyScopedControlStyles(this);
-            viewModel = new PowerLapViewModel();
-            DataContext = viewModel;
             List<ComboBoxItem> items = new List<ComboBoxItem>
             {
                 new ComboBoxItem { ImagePath = "Images/carClasses/SC.png", Description = "All", Value = "All" },
@@ -44,182 +43,134 @@ namespace TDU2_Track_Records
                 new ComboBoxItem { ImagePath = "Images/carClasses/MA1.png", Description = "Motorcycles 1", Value = "mA1" },
                 new ComboBoxItem { ImagePath = "Images/carClasses/MA2.png", Description = "Motorcycles 2", Value = "mA2" }
             };
+            ClassSelector.ItemsSource = items;
+            ClassSelector.SelectedIndex = 0;
+            IslandSelector.ItemsSource = new[] { "All", "Ibiza", "Hawaii", "Casino" };
+            IslandSelector.SelectedIndex = 0;
+            WeatherSelector.ItemsSource = new[] { "Sunny", "Rainy" };
+            WeatherSelector.SelectedIndex = 0;
+            DirectionSelector.ItemsSource = new[] { "Clockwise", "Anticlockwise" };
+            DirectionSelector.SelectedIndex = 0;
 
-            combo_Class.ItemsSource = items;
-            combo_Class.SelectedIndex = 0;
-            List<ComboBoxItem> sorts = new List<ComboBoxItem>
+            IslandSelector.SelectionChanged += (sender, args) => RefreshRecordedTracks();
+            TrackSelector.SelectionChanged += (sender, args) => ResetResults();
+            ClassSelector.SelectionChanged += (sender, args) => ResetResults();
+            WeatherSelector.SelectionChanged += (sender, args) => ResetResults();
+            DirectionSelector.SelectionChanged += (sender, args) => ResetResults();
+            ShowLapsButton.Click += (sender, args) => LoadFastestLaps();
+            ScreenshotButton.Click += SaveScreenshot;
+            CopyScreenshotButton.Click += CopyScreenshot;
+            Loaded += (sender, args) =>
             {
-                new ComboBoxItem { ImagePath = "Images/carClasses/SC.png", Description = "Car Name", Value = "carName" },
-                new ComboBoxItem { ImagePath = "Images/carClasses/A1.png", Description = "Fastest Lap", Value = "Total_Time" },
-                new ComboBoxItem { ImagePath = "Images/carClasses/A2.png", Description = "Average Lap", Value = "Average_Lap" }
+                bool reloadResults = shownLaps != null;
+                RefreshRecordedTracks();
+                if (reloadResults)
+                    LoadFastestLaps();
             };
-
-            combo_Sort.ItemsSource = sorts;
-
-            combo_TextBlock.Visibility = Visibility.Collapsed;
-            RefreshRecordedTracks();
         }
 
-        private void Combo_Class_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void LoadFastestLaps()
         {
-            ComboBoxItem selectedItem = combo_Class.SelectedItem as ComboBoxItem;
-            if (selectedItem != null)
-            {
-                AppNotice.Show(this, "Selected Value: " + selectedItem.Value);
-            }
-        }
-
-        private bool LoadFastestLaps()
-        {
-            if (!(combo_Track.SelectedItem is DataRowView track))
-                return false;
-
-            int trackId = Convert.ToInt32(track["id"]);
-            bool hasOrientation = TrackSupportsOrientation(track);
-            int conditions = cb_conditions.IsChecked == true ? 1 : 0;
-            int orientation = cb_orientation.IsChecked == true ? 1 : 0;
-            string carClass = (combo_Class.SelectedItem as ComboBoxItem)?.Value ?? "All";
-
-            var lapDataAccess = new LapDataAccess(connectionString);
-            List<Lap> fastestLaps = lapDataAccess.GetFastestLapForEachCar(trackId, conditions, orientation, carClass, this);
-            LapsListBox.ItemsSource = fastestLaps;
-            if (fastestLaps.Count == 0)
-            {
-                viewModel.IsOrientationImageVisible = false;
-                PowerLapStatus.Text = hasOrientation
-                    ? "No lap times for this class, weather and direction."
-                    : "No lap times for this class and weather.";
-                return false;
-            }
-
-            PowerLapStatus.Text = string.Empty;
-            viewModel.WeatherImageSource = conditions == 0 ? "/Images/sun.png" : "/Images/rain.png";
-            viewModel.IsWeatherImageVisible = true;
-            viewModel.OrientationImageSource = orientation == 0 ? "/Images/clockwise.png" : "/Images/anticlockwise.png";
-            viewModel.IsOrientationImageVisible = hasOrientation;
-            return true;
-        }
-
-        private void cb_conditions_StateChanged(object sender, RoutedEventArgs e)
-        {
-            if (cb_conditions.IsChecked == false)
-            {
-                cb_weather.IsChecked = false;
-            }
-            else
-            {
-                cb_weather.IsChecked = true;
-            }
-        }
-        private void cb_orientation_StateChanged(object sender, RoutedEventArgs e)
-        {
-            if (cb_orientation.IsChecked == false)
-            {
-                txt_orientation.IsChecked = false;
-            }
-            else
-            {
-                txt_orientation.IsChecked = true;
-            }
-        }
-
-        private void cb_weather_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (cb_conditions.IsChecked == false)
-            {
-                cb_conditions.IsChecked = true;
-            }
-            else
-            {
-                cb_conditions.IsChecked = false;
-            }
-
-        }
-
-        private void txt_orientation_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (cb_orientation.IsChecked == false)
-            {
-                cb_orientation.IsChecked = true;
-            }
-            else
-            {
-                cb_orientation.IsChecked = false;
-            }
-
-        }
-        private void cb_weather_Click(object sender, RoutedEventArgs e)
-        {
-            if (cb_conditions.IsChecked == false)
-            {
-
-                cb_conditions.IsChecked = true;
-            }
-            else
-            {
-                cb_conditions.IsChecked = false;
-            }
-        }
-
-        private void txt_orientation_Click(object sender, RoutedEventArgs e)
-        {
-            if (cb_orientation.IsChecked == false)
-            {
-
-                cb_orientation.IsChecked = true;
-            }
-            else
-            {
-                cb_orientation.IsChecked = false;
-            }
-        }
-
-        private void combo_Button_Click(object sender, RoutedEventArgs e)
-        {
-            if (!(combo_Track.SelectedItem is DataRowView selectedTrack) ||
-                !(combo_Class.SelectedItem is ComboBoxItem selectedClass) ||
-                !LoadFastestLaps())
+            if (!(TrackSelector.SelectedItem is DataRowView track))
                 return;
 
-            combo_TextBlock.Content = new Image
+            int trackId = Convert.ToInt32(track["id"]);
+            string carClass = (ClassSelector.SelectedItem as ComboBoxItem)?.Value ?? "All";
+            var lapDataAccess = new LapDataAccess(connectionString);
+            List<Lap> laps = lapDataAccess.GetFastestLapForEachCar(trackId, WeatherSelector.SelectedIndex,
+                DirectionSelector.SelectedIndex, carClass, Window.GetWindow(this));
+            shownLaps = laps;
+            BoardHost.Visibility = laps.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            BoardHost.Content = laps.Count > 0 ? CreateBoard(track) : null;
+            ScreenshotButton.IsEnabled = laps.Count > 0;
+            CopyScreenshotButton.IsEnabled = ScreenshotButton.IsEnabled;
+            PowerLapStatus.Text = laps.Count == 0 ? "No lap times match these filters." : string.Empty;
+        }
+
+        private PowerLapBoard CreateBoard(DataRowView track)
+        {
+            string restriction = track["RestrictedClass"].ToString().Trim();
+            string classImage = ClassSelector.Items.OfType<ComboBoxItem>()
+                .FirstOrDefault(item => item.Value != "All" && item.Value.Equals(restriction, StringComparison.OrdinalIgnoreCase))
+                ?.ImagePath;
+            bool hasRestriction = restriction.Length > 0 && !restriction.Equals("All", StringComparison.OrdinalIgnoreCase);
+            bool? anticlockwise = SupportsDirection(track) ? (bool?)(DirectionSelector.SelectedIndex == 1) : null;
+            return new PowerLapBoard(track["Name"].ToString(), hasRestriction ? restriction : "Open class", classImage,
+                WeatherSelector.SelectedIndex == 1, anticlockwise, shownLaps);
+        }
+
+        private void SaveScreenshot(object sender, RoutedEventArgs e)
+        {
+            if (!(TrackSelector.SelectedItem is DataRowView track) || shownLaps == null || shownLaps.Count == 0)
+                return;
+
+            string name = string.Join("_", track["Name"].ToString().Split(Path.GetInvalidFileNameChars()));
+            var dialog = new SaveFileDialog
             {
-                Source = new System.Windows.Media.Imaging.BitmapImage(new Uri(selectedClass.ImagePath, UriKind.Relative)),
-                Width = 40,
-                Height = 40
+                Title = "Save Power Laps Screenshot",
+                FileName = "Power Laps - " + name,
+                Filter = "PNG image (*.png)|*.png",
+                DefaultExt = ".png"
             };
-            trackName.Text = "@" + selectedTrack["Name"];
-            combo_TextBlock.Visibility = Visibility.Visible;
-            cb_weather.IsEnabled = false;
-            txt_orientation.IsEnabled = false;
-            grp.Visibility = Visibility.Collapsed;
+            var owner = Window.GetWindow(this);
+            if (dialog.ShowDialog(owner) != true)
+                return;
+
+            try
+            {
+                var screenshot = new PngBitmapEncoder();
+                screenshot.Frames.Add(BitmapFrame.Create(CreateBoard(track).RenderBitmap()));
+                using (var file = File.Create(dialog.FileName))
+                    screenshot.Save(file);
+            }
+            catch (Exception ex)
+            {
+                AppNotice.Show(owner, ex.Message, "Could not save screenshot", persistent: true);
+            }
         }
 
-        private void TrackComboBox_DropDownOpened(object sender, EventArgs e)
+        private void CopyScreenshot(object sender, RoutedEventArgs e)
         {
-            RefreshRecordedTracks();
+            if (!(TrackSelector.SelectedItem is DataRowView track) || shownLaps == null || shownLaps.Count == 0)
+                return;
+
+            var owner = Window.GetWindow(this);
+            try
+            {
+                Clipboard.SetImage(CreateBoard(track).RenderBitmap());
+                AppNotice.Show(owner, "Power Laps image copied to the clipboard.");
+            }
+            catch (Exception ex)
+            {
+                AppNotice.Show(owner, ex.Message, "Could not copy screenshot", persistent: true);
+            }
         }
 
-        private void IslandSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private static bool SupportsDirection(DataRowView track)
         {
-            if (viewModel != null)
-                RefreshRecordedTracks();
+            return track != null && track["Laps"] != DBNull.Value &&
+                   EventCatalog.SupportsOrientation(track["RaceType"].ToString(), Convert.ToInt32(track["Laps"]));
         }
 
-        private static bool TrackSupportsOrientation(DataRowView track) =>
-            track != null && track["Laps"] != DBNull.Value &&
-            EventCatalog.SupportsOrientation(track["RaceType"].ToString(), Convert.ToInt32(track["Laps"]));
-
-        private void TrackComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ResetResults()
         {
-            if (txt_orientation != null)
-                txt_orientation.Visibility = TrackSupportsOrientation(combo_Track.SelectedItem as DataRowView)
-                    ? Visibility.Visible : Visibility.Collapsed;
+            var track = TrackSelector.SelectedItem as DataRowView;
+            DirectionFilter.Visibility = SupportsDirection(track) ? Visibility.Visible : Visibility.Collapsed;
+            ShowLapsButton.IsEnabled = track != null;
+            shownLaps = null;
+            BoardHost.Content = null;
+            BoardHost.Visibility = Visibility.Collapsed;
+            ScreenshotButton.IsEnabled = false;
+            CopyScreenshotButton.IsEnabled = false;
+            PowerLapStatus.Text = TrackSelector.Items.Count == 0
+                ? "No timed results for this island selection."
+                : "Choose your filters, then select Show Laps.";
         }
 
         private void RefreshRecordedTracks()
         {
             const string query = @"
-                SELECT t.id, t.Name, t.RaceType, t.Laps
+                SELECT t.id, t.Name, t.RaceType, t.Laps, t.RestrictedClass
                 FROM tracks t
                 WHERE (@Island = 'All' OR COALESCE(NULLIF(TRIM(t.Island), ''), 'Hawaii') = @Island)
                   AND EXISTS (
@@ -230,50 +181,26 @@ namespace TDU2_Track_Records
 
             try
             {
-                object selectedTrackId = combo_Track.SelectedValue;
+                object selectedTrackId = TrackSelector.SelectedValue;
                 using (var connection = new SQLiteConnection(connectionString))
                 using (var command = new SQLiteCommand(query, connection))
                 using (var adapter = new SQLiteDataAdapter(command))
                 {
-                    string island = (IslandSelector.SelectedItem as System.Windows.Controls.ComboBoxItem)?.Content?.ToString() ?? "All";
-                    command.Parameters.AddWithValue("@Island", island);
+                    command.Parameters.AddWithValue("@Island", IslandSelector.SelectedItem ?? "All");
                     connection.Open();
                     var tracks = new DataTable();
                     adapter.Fill(tracks);
-                    combo_Track.DisplayMemberPath = "Name";
-                    combo_Track.SelectedValuePath = "id";
-                    combo_Track.ItemsSource = tracks.DefaultView;
-                    combo_Track.SelectedValue = selectedTrackId;
-                    combo_Button.IsEnabled = tracks.Rows.Count > 0;
-                    PowerLapStatus.Text = tracks.Rows.Count == 0 ? "No timed results for this island selection." : string.Empty;
+                    TrackSelector.ItemsSource = tracks.DefaultView;
+                    TrackSelector.SelectedValue = selectedTrackId;
+                    ResetResults();
                 }
             }
             catch (Exception ex)
             {
-                AppNotice.Show(this, $"An error occurred while loading tracks:\n{ex.Message}",
-                    "Error", persistent: true);
+                AppNotice.Show(Window.GetWindow(this), $"An error occurred while loading tracks:\n{ex.Message}",
+                    "Power Laps", persistent: true);
             }
         }
-
-        private void LapsListBox_PreviewMouseRightButtonUp(object sender, MouseButtonEventArgs e)
-        {
-            grp.Visibility = Visibility.Visible;
-            combo_TextBlock.Visibility = Visibility.Collapsed;
-            LapsListBox.ItemsSource = null;
-            trackName.Text = "";
-            PowerLapStatus.Text = combo_Track.Items.Count == 0 ? "No timed results for this island selection." : string.Empty;
-            cb_weather.IsEnabled = true;
-            txt_orientation.IsEnabled = true;
-        }
-
-        private void Window_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
-        {
-            if (e.ButtonState == MouseButtonState.Pressed)
-            {
-                this.DragMove();
-            }
-        }
-
     }
 
     public class ComboBoxItem
@@ -356,59 +283,5 @@ namespace TDU2_Track_Records
             return laps;
         }
 
-    }
-    public class PowerLapViewModel : INotifyPropertyChanged
-    {
-        private string _weatherImageSource;
-        private string _orientationImageSource;
-        private bool _isWeatherImageVisible;
-        private bool _isOrientationImageVisible;
-
-        public string WeatherImageSource
-        {
-            get => _weatherImageSource;
-            set
-            {
-                _weatherImageSource = value;
-                OnPropertyChanged(nameof(WeatherImageSource));
-            }
-        }
-
-        public string OrientationImageSource
-        {
-            get => _orientationImageSource;
-            set
-            {
-                _orientationImageSource = value;
-                OnPropertyChanged(nameof(OrientationImageSource));
-            }
-        }
-
-        public bool IsWeatherImageVisible
-        {
-            get => _isWeatherImageVisible;
-            set
-            {
-                _isWeatherImageVisible = value;
-                OnPropertyChanged(nameof(IsWeatherImageVisible));
-            }
-        }
-
-        public bool IsOrientationImageVisible
-        {
-            get => _isOrientationImageVisible;
-            set
-            {
-                _isOrientationImageVisible = value;
-                OnPropertyChanged(nameof(IsOrientationImageVisible));
-            }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
     }
 }

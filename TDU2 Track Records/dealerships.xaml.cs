@@ -6,9 +6,10 @@ using System.Windows.Media.Imaging;
 using System.Windows.Media;
 using TDU2_Track_Records.Properties;
 using System.Windows.Input;
-using System.Collections.Generic;
 using System.IO;
-using System.Linq;
+using Path = System.Windows.Shapes.Path;
+using System.Windows.Automation;
+using System.Windows.Threading;
 using TDU2_Track_Records.Classes;
 
 namespace TDU2_Track_Records
@@ -18,26 +19,32 @@ namespace TDU2_Track_Records
         readonly string connectionString = Settings.Default.connectionString;
         public string distance, speed;
         readonly string SI = Settings.Default.system;
-        public int SelectedMaxSlots = Settings.Default.dealershipSlots;
         public int dealershipColumn = Settings.Default.dealershipColumns;
-        private int DealerCardColumns => Math.Max(1, dealershipColumn);
         private static double lastcardLeft;
         private static double lastcardTop;
         private readonly LocationMenu locationMenu;
-        private bool updatingVehicleFilters;
-
-        private sealed class DealerSlot
-        {
-            public VehicleDetails Vehicle { get; set; }
-        }
+        private readonly DealershipStock stock;
+        private readonly DispatcherTimer searchTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(180) };
 
         public dealerships()
         {
             InitializeComponent();
+            stock = new DealershipStock(connectionString);
+            searchTimer.Tick += (sender, args) =>
+            {
+                searchTimer.Stop();
+                UpdateVehicleSearch();
+            };
             var locations = LocationMenu.ReadLocations(connectionString,
                 "SELECT Name, Island FROM dealerships ORDER BY id", separateCasinoShowrooms: true);
             locationMenu = new LocationMenu(LocationMenus, LocationSearchBox, LocationCountText,
                 locations, "LOCATIONS", ShowLocation, includeCasino: true);
+            VehiclesStackPanel.Columns = Math.Max(1, dealershipColumn);
+            VehiclesScrollViewer.SizeChanged += (sender, args) =>
+            {
+                if (args.WidthChanged && args.NewSize.Width > 0)
+                    VehiclesStackPanel.Columns = Math.Max(1, Math.Min(dealershipColumn, (int)(args.NewSize.Width / 280)));
+            };
             locationMenu.SelectFirst();
         }
 
@@ -45,8 +52,9 @@ namespace TDU2_Track_Records
 
         private void ShowLocation(LocationMenu.Location location)
         {
+            VehicleSearchBox.Clear();
             LoadVehicles(location.Name);
-            VehiclesScrollViewer.Visibility = Visibility.Visible;
+            SetSearchView(false);
             VehiclesScrollViewer.ScrollToTop();
         }
 
@@ -62,12 +70,7 @@ namespace TDU2_Track_Records
 
         private void LoadVehicles(string dealershipName)
         {
-            VehiclesStackPanel.Children.Clear(); // Clear existing UI elements before loading new ones
-            VehiclesStackPanel.ColumnDefinitions.Clear();
-            VehiclesStackPanel.RowDefinitions.Clear();
-            for (int columnIndex = 0; columnIndex < DealerCardColumns; columnIndex++)
-                VehiclesStackPanel.ColumnDefinitions.Add(new ColumnDefinition());
-            int slotIndex = 0;
+            VehiclesStackPanel.Children.Clear();
             string island = locationMenu.Selected.Island;
 
             using (SQLiteConnection conn = new SQLiteConnection(connectionString))
@@ -82,18 +85,9 @@ namespace TDU2_Track_Records
                     {
                         if (reader.Read())
                         {
-                            Dealership.Visibility = Visibility.Visible;
                             DealershipTitleText.Text = dealershipName.ToUpperInvariant();
                             DealershipIslandText.Text = island.ToUpperInvariant();
                             DealershipSubtitleText.Text = $"Selected showroom on {island}. Browse the vehicles currently assigned to this location.";
-
-                            int inStockCount = 0;
-                            for (int stockIndex = 1; stockIndex <= SelectedMaxSlots; stockIndex++)
-                            {
-                                if (!string.IsNullOrWhiteSpace(reader[$"Slot{stockIndex}_VehicleId"]?.ToString()))
-                                    inStockCount++;
-                            }
-                            DealershipStockText.Text = $"{inStockCount} CARS";
 
                             try
                             {
@@ -107,92 +101,77 @@ namespace TDU2_Track_Records
                                 DealershipImage.Source = fallbackImage;
                             }
 
-                            var dealerSlots = new List<DealerSlot>();
-                            // Read the showroom once, then apply the optional brand/model filters.
-                            for (int i = 1; i <= SelectedMaxSlots; i++) // Increased from 8 to 20 slots
+                            int inStockCount = 0;
+                            foreach (string slot in stock.SlotColumns)
                             {
-                                string slotColumn = $"Slot{i}_VehicleId";
-                                string vehicleId = reader[slotColumn]?.ToString();
-                                dealerSlots.Add(new DealerSlot
-                                {
-                                    Vehicle = string.IsNullOrEmpty(vehicleId) ? null : GetVehicleDetails(vehicleId)
-                                });
-                            }
-
-                            UpdateVehicleFilters(dealerSlots);
-                            bool filtering = IsVehicleFilterActive();
-                            int visibleCount = 0;
-                            foreach (DealerSlot dealerSlot in dealerSlots)
-                            {
-                                if (dealerSlot.Vehicle == null)
-                                {
+                                string vehicleId = reader[slot].ToString();
+                                if (string.IsNullOrWhiteSpace(vehicleId))
                                     continue;
-                                }
-                                if (!MatchesVehicleFilters(dealerSlot.Vehicle))
-                                    continue;
-                                AddVehicleToUI(dealerSlot.Vehicle, slotIndex++);
-                                visibleCount++;
+                                inStockCount++;
+                                VehicleDetails vehicle = GetVehicleDetails(vehicleId);
+                                if (vehicle != null)
+                                    AddVehicleToUI(vehicle);
                             }
-                            DealershipStockText.Text = filtering ? $"{visibleCount} / {inStockCount} CARS" : $"{inStockCount} CARS";
+                            DealershipStockText.Text = $"{inStockCount} CARS";
                         }
                     }
                 }
             }
         }
 
-        private bool IsVehicleFilterActive()
+        private void VehicleSearchBox_TextChanged(object sender, TextChangedEventArgs e)
         {
-            return BrandFilterComboBox.SelectedIndex > 0 || ModelFilterComboBox.SelectedIndex > 0;
-        }
-
-        private bool MatchesVehicleFilters(VehicleDetails vehicle)
-        {
-            string brand = BrandFilterComboBox.SelectedIndex > 0 ? BrandFilterComboBox.SelectedItem as string : null;
-            string model = ModelFilterComboBox.SelectedIndex > 0 ? ModelFilterComboBox.SelectedItem as string : null;
-            return (brand == null || string.Equals(vehicle.VehicleBrand, brand, StringComparison.OrdinalIgnoreCase)) &&
-                   (model == null || string.Equals(vehicle.VehicleModel, model, StringComparison.OrdinalIgnoreCase));
-        }
-
-        private void UpdateVehicleFilters(IEnumerable<DealerSlot> dealerSlots)
-        {
-            string selectedBrand = BrandFilterComboBox.SelectedIndex > 0 ? BrandFilterComboBox.SelectedItem as string : null;
-            string selectedModel = ModelFilterComboBox.SelectedIndex > 0 ? ModelFilterComboBox.SelectedItem as string : null;
-            var vehicles = new List<VehicleDetails>();
-            foreach (DealerSlot slot in dealerSlots)
-                if (slot.Vehicle != null)
-                    vehicles.Add(slot.Vehicle);
-
-            var brands = new List<string> { "All brands" };
-            brands.AddRange(vehicles.ConvertAll(vehicle => vehicle.VehicleBrand)
-                .FindAll(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value));
-
-            updatingVehicleFilters = true;
-            BrandFilterComboBox.ItemsSource = brands;
-            BrandFilterComboBox.SelectedItem = selectedBrand != null && brands.Contains(selectedBrand) ? selectedBrand : brands[0];
-
-            string activeBrand = BrandFilterComboBox.SelectedIndex > 0 ? BrandFilterComboBox.SelectedItem as string : null;
-            var models = new List<string> { "All models" };
-            models.AddRange(vehicles
-                .FindAll(vehicle => activeBrand == null || string.Equals(vehicle.VehicleBrand, activeBrand, StringComparison.OrdinalIgnoreCase))
-                .ConvertAll(vehicle => vehicle.VehicleModel)
-                .FindAll(value => !string.IsNullOrWhiteSpace(value))
-                .Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(value => value));
-            ModelFilterComboBox.ItemsSource = models;
-            ModelFilterComboBox.SelectedItem = selectedModel != null && models.Contains(selectedModel) ? selectedModel : models[0];
-            updatingVehicleFilters = false;
-        }
-
-        private void VehicleFilter_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (updatingVehicleFilters || locationMenu?.Selected == null)
+            if (stock == null)
                 return;
-            LoadVehicles(locationMenu.Selected.Name);
+            searchTimer.Stop();
+            if (string.IsNullOrWhiteSpace(VehicleSearchBox.Text))
+            {
+                DealershipSearchTable.ItemsSource = null;
+                SetSearchView(false);
+            }
+            else
+            {
+                searchTimer.Start();
+            }
         }
 
+        private void UpdateVehicleSearch()
+        {
+            string search = VehicleSearchBox.Text.Trim();
+            if (search.Length == 0)
+                return;
+            try
+            {
+                var results = stock.Search(search);
+                DealershipSearchTable.ItemsSource = results;
+                VehicleSearchEmptyText.Visibility = results.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+                VehicleSearchHeading.Text = $"{results.Count} {(results.Count == 1 ? "match" : "matches")} for “{search}”";
+                SetSearchView(true);
+            }
+            catch (Exception ex)
+            {
+                AppNotice.Show(Window.GetWindow(VehicleSearchBox), ex.Message, "Dealership search failed", persistent: true);
+            }
+        }
 
+        private void SetSearchView(bool searching)
+        {
+            VehicleSearchResultsPanel.Visibility = searching ? Visibility.Visible : Visibility.Collapsed;
+            Dealership.Visibility = VehiclesScrollViewer.Visibility = !searching && locationMenu?.Selected != null
+                ? Visibility.Visible : Visibility.Collapsed;
+        }
 
+        private void SearchDealer_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.Tag is DealershipSearchResult result)
+                locationMenu.Select(result.DealerName, result.Island);
+        }
 
+        private void SearchThumbnail_Click(object sender, RoutedEventArgs e)
+        {
+            if ((sender as Button)?.Tag is DealershipSearchResult result)
+                VehicleImagePreview.Show(Window.GetWindow((Button)sender), result.Thumbnail, result.CarName);
+        }
 
         private VehicleDetails GetVehicleDetails(string vehicleId)
         {
@@ -236,7 +215,7 @@ namespace TDU2_Track_Records
             return vehicle;
         }
 
-        private void AddVehicleToUI(VehicleDetails vehicle, int slotIndex)
+        private void AddVehicleToUI(VehicleDetails vehicle)
         {
             Border vehicleCard = new Border
             {
@@ -249,7 +228,6 @@ namespace TDU2_Track_Records
 
             Grid cardLayout = new Grid();
             cardLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
-            cardLayout.RowDefinitions.Add(new RowDefinition { Height = new GridLength(150) });
             cardLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             cardLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
             cardLayout.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
@@ -279,14 +257,18 @@ namespace TDU2_Track_Records
             header.Children.Add(classChip);
             cardLayout.Children.Add(header);
 
-            Grid imageSurface = new Grid { Background = Brushes.Black, Margin = new Thickness(10, 8, 10, 0), ClipToBounds = true };
-            BitmapImage photo = ByteArrayToImageSourceConverter.ReadVehiclePhoto(vehicle.id);
-            Image vehicleImage = new Image
+            var imageSurface = new Grid
             {
-                Source = photo ?? LoadImage(vehicle.VehicleImage),
-                Stretch = photo != null ? Stretch.Uniform : Stretch.UniformToFill
+                Height = 180, Background = Brushes.Black, Margin = new Thickness(10, 8, 10, 0), ClipToBounds = true
             };
-            imageSurface.Children.Add(vehicleImage);
+            ImageSource photo = ByteArrayToImageSourceConverter.ReadVehiclePhoto(vehicle.id) ?? LoadImage(vehicle.VehicleImage);
+            double heightPerWidth = photo.Width > 0 ? photo.Height / photo.Width : 9.0 / 16;
+            imageSurface.SizeChanged += (sender, args) =>
+            {
+                if (args.WidthChanged && args.NewSize.Width > 0)
+                    imageSurface.Height = Math.Max(180, Math.Min(440, args.NewSize.Width * heightPerWidth));
+            };
+            imageSurface.Children.Add(VehicleImagePreview.CreateButton(photo, vehicle.VehicleName));
             if (decimal.TryParse(vehicle.VehiclePrice, out decimal price))
             {
                 Border priceBadge = new Border
@@ -298,6 +280,7 @@ namespace TDU2_Track_Records
                     Margin = new Thickness(8),
                     HorizontalAlignment = HorizontalAlignment.Right,
                     VerticalAlignment = VerticalAlignment.Bottom,
+                    IsHitTestVisible = false,
                     Child = new TextBlock { Text = "$" + price.ToString("N0"), Foreground = new SolidColorBrush(Color.FromRgb(255, 180, 170)), FontWeight = FontWeights.Bold }
                 };
                 imageSurface.Children.Add(priceBadge);
@@ -325,35 +308,35 @@ namespace TDU2_Track_Records
                 cardLayout.Children.Add(paintPreview);
             }
 
-            Grid actions = new Grid { Margin = new Thickness(10, 0, 10, 10) };
-            actions.ColumnDefinitions.Add(new ColumnDefinition());
-            actions.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
-            Button viewDetailsButton = new Button
-            {
-                Content = "CARD / VIEW SPECS",
-                FontSize = 14,
-                Padding = new Thickness(12, 6, 12, 6),
-                Tag = vehicle.id
-            };
-            viewDetailsButton.Click += ViewDetailsButton_Click;
-            Grid.SetColumn(viewDetailsButton, 1);
-            actions.Children.Add(viewDetailsButton);
-            Grid.SetRow(actions, 4);
-            cardLayout.Children.Add(actions);
+            imageSurface.Children.Add(CreateSpecsButton(vehicle.id, vehicle.VehicleName));
 
             vehicleCard.Child = cardLayout;
 
-            Grid grid = VehiclesStackPanel;
-            int columns = DealerCardColumns;
-            while (grid.ColumnDefinitions.Count < columns)
-                grid.ColumnDefinitions.Add(new ColumnDefinition());
-            int rows = (slotIndex + columns) / columns;
-            while (grid.RowDefinitions.Count < rows)
-                grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+            VehiclesStackPanel.Children.Add(vehicleCard);
+        }
 
-            Grid.SetColumn(vehicleCard, slotIndex % columns);
-            Grid.SetRow(vehicleCard, slotIndex / columns);
-            grid.Children.Add(vehicleCard);
+        private Button CreateSpecsButton(int vehicleId, string vehicleName)
+        {
+            var button = new Button
+            {
+                Tag = vehicleId,
+                ToolTip = "View specs",
+                HorizontalAlignment = HorizontalAlignment.Left,
+                VerticalAlignment = VerticalAlignment.Top,
+                Margin = new Thickness(8),
+                Padding = new Thickness(7),
+                Cursor = Cursors.Hand,
+                Content = new Path
+                {
+                    Data = Geometry.Parse("M2,1 H14 V17 H2 Z M5,5 H11 M5,9 H11 M5,13 H9"),
+                    Stroke = Brushes.White, StrokeThickness = 1.5,
+                    Width = 16, Height = 18, Stretch = Stretch.Uniform
+                }
+            };
+            button.SetResourceReference(FrameworkElement.StyleProperty, "AppScopedButtonStyle");
+            AutomationProperties.SetName(button, "View specs for " + vehicleName);
+            button.Click += ViewDetailsButton_Click;
+            return button;
         }
 
         private static string GetVehicleStatus(VehicleDetails vehicle)
@@ -470,8 +453,6 @@ namespace TDU2_Track_Records
                 BitmapImage img = new BitmapImage();
                 img.BeginInit();
                 img.StreamSource = ms;
-                img.DecodePixelWidth = 300; // Set max width
-                img.DecodePixelHeight = 150; // Set max height
                 img.CacheOption = BitmapCacheOption.OnLoad;
                 img.EndInit();
                 return img;

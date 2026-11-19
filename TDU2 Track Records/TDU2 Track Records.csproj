@@ -94,6 +94,8 @@
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Net.Http" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -113,8 +115,16 @@
     </ApplicationDefinition>
     <Compile Include="AppState.cs" />
     <Compile Include="AppData.cs" />
+    <Compile Include="DatabaseMaintenance.cs" />
+    <Compile Include="GitHubUpdates.cs" />
     <Compile Include="EventCatalog.cs" />
     <Compile Include="FactoryPaintPreview.cs" />
+    <Compile Include="PowerLapBoard.xaml.cs">
+      <DependentUpon>PowerLapBoard.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="VehicleImagePreview.cs" />
+    <Compile Include="VehicleClassIconConverter.cs" />
+    <Compile Include="DealershipStock.cs" />
     <Compile Include="ThemeManager.cs" />
     <Compile Include="LocationMenu.cs" />
     <Compile Include="CircularProgressBar.xaml.cs">
@@ -194,6 +204,10 @@
     <Page Include="ObjectivesWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="PowerLapBoard.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
     </Page>
     <Page Include="powerlap.xaml">
       <SubType>Designer</SubType>

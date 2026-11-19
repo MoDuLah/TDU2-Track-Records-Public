@@ -8,6 +8,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 import sys
 import time
 from dataclasses import dataclass
@@ -34,7 +35,9 @@ class SaveSession:
 
 
 def resolve_data_path(path):
-    path = Path(path).expanduser().resolve()
+    # The importer identifies the source and profile by the path it selected.
+    # Keep that path intact when a folder is a junction or symbolic link.
+    path = Path(os.path.abspath(Path(path).expanduser()))
     if path.is_dir():
         if (path / "PLAYERSAVE").is_dir():
             path /= "PLAYERSAVE"
@@ -266,6 +269,8 @@ def read_live_snapshot(path, profile=None):
 
 
 def main():
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(description="Emit a fresh Track Records snapshot from a TDU2 DATA save.")
     parser.add_argument("path", help="DATA file, PLAYERSAVE folder, or profile folder")
     parser.add_argument("--profile", help="Encryption profile name when automatic detection is unavailable")

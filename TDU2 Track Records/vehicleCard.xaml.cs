@@ -5,6 +5,7 @@ using System.Windows.Input;
 using TDU2_Track_Records.Properties;
 using System.IO;
 using System.Windows.Media.Imaging;
+using TDU2_Track_Records.Classes;
 
 namespace TDU2_Track_Records
 {
@@ -55,6 +56,9 @@ namespace TDU2_Track_Records
                 accelerationUpgrade = topSpeedUpgrade = brakingUpgrade = catalogueLevel;
                 LoadGarageUpgradeLevels(vehicleId);
                 this.DataContext = vehicle;
+                var photo = ByteArrayToImageSourceConverter.ReadVehiclePhoto(vehicleId);
+                if (photo != null)
+                    VehicleHeaderPhoto.ImageSource = photo;
                 UpdateStorageLocationVisibility(vehicle);
                 VehiclerClass.Source = new BitmapImage(new Uri("/Images/carClasses/" + vehicle.VehicleCategory + ".png", UriKind.Relative));
                 AccTimeImage.Source = new BitmapImage(new Uri($"/Images/vehicleCard/acc{conversionAccImage}ph.png", UriKind.Relative));
@@ -195,6 +199,8 @@ namespace TDU2_Track_Records
             SetVisibility(CanPaint, CantPaint, canPaints);
             SetVisibility(CanSticker, CantSticker, canStickers);
             SetVisibility(CanUpgrade, CantUpgrade, canUpgrades);
+            UpgradeStageArrow.Visibility = UpgradeIncreaseHint.Visibility = UpgradeDecreaseHint.Visibility =
+                canUpgrades ? Visibility.Visible : Visibility.Collapsed;
         }
         private void SetVisibility(UIElement canElement, UIElement cantElement, bool condition)
         {
@@ -249,16 +255,19 @@ namespace TDU2_Track_Records
 
         private void Minimize_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            e.Handled = true;
             Window.GetWindow(this).WindowState = WindowState.Minimized;
         }
 
         private void Close_Button_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            e.Handled = true;
             Window.GetWindow(this)?.Close();
         }
 
         private void VehiclerLevel_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
+            e.Handled = true;
             if (canUpgrade == false) { return; }
             accelerationUpgrade = Math.Min(4, accelerationUpgrade + 1);
             topSpeedUpgrade = Math.Min(4, topSpeedUpgrade + 1);
@@ -269,12 +278,19 @@ namespace TDU2_Track_Records
 
         private void VehiclerLevel_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
+            e.Handled = true;
             if (canUpgrade == false) { return; }
             accelerationUpgrade = Math.Max(0, accelerationUpgrade - 1);
             topSpeedUpgrade = Math.Max(0, topSpeedUpgrade - 1);
             brakingUpgrade = Math.Max(0, brakingUpgrade - 1);
             previewChanged = true;
             UpdateVehicleDetails(vehicleId);
+        }
+
+        private void VehiclePhoto_Click(object sender, RoutedEventArgs e)
+        {
+            if (DataContext is VehicleDetails vehicle)
+                VehicleImagePreview.Show(this, VehicleHeaderPhoto.ImageSource, vehicle.VehicleName);
         }
 
         private void LoadGarageUpgradeLevels(int expectedVehicleId)

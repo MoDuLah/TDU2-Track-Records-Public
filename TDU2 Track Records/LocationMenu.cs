@@ -81,6 +81,13 @@ namespace TDU2_Track_Records
                 Select(first);
         }
 
+        public void Select(string name, string island)
+        {
+            Location location = locations.FirstOrDefault(item => item.Name == name && item.Island == island);
+            if (location != null)
+                Select(location);
+        }
+
         public void ClearSelection()
         {
             Selected = null;

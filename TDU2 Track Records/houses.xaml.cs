@@ -537,12 +537,8 @@ namespace TDU2_Track_Records
             identity.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(145) });
             identity.ColumnDefinitions.Add(new ColumnDefinition());
             Border imageBorder = new Border { Height = 92, ClipToBounds = true, BorderBrush = new SolidColorBrush(Color.FromRgb(59, 62, 69)), BorderThickness = new Thickness(1) };
-            BitmapImage photo = ByteArrayToImageSourceConverter.ReadVehiclePhoto(vehicle.id);
-            imageBorder.Child = new Image
-            {
-                Source = photo ?? LoadImage(vehicle.VehicleImage),
-                Stretch = photo != null ? Stretch.Uniform : Stretch.UniformToFill
-            };
+            ImageSource photo = ByteArrayToImageSourceConverter.ReadVehiclePhoto(vehicle.id) ?? LoadImage(vehicle.VehicleImage);
+            imageBorder.Child = VehicleImagePreview.CreateButton(photo, vehicle.VehicleName);
             identity.Children.Add(imageBorder);
             StackPanel identityText = new StackPanel { Margin = new Thickness(12, 3, 0, 0) };
             identityText.Children.Add(new TextBlock { Text = vehicle.VehicleName.ToUpperInvariant(), Foreground = Brushes.White, FontSize = 17, FontWeight = FontWeights.Bold, TextWrapping = TextWrapping.Wrap });

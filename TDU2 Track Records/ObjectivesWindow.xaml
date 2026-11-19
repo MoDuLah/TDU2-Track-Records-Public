@@ -40,12 +40,12 @@
                 </TabItem.Header>
                 <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled"
                               Focusable="False" FocusVisualStyle="{x:Null}">
-                    <Border CornerRadius="20" Background="#FF161B1E" MaxWidth="760"
-                            Margin="10,12" Padding="10" VerticalAlignment="Top">
+                    <Border CornerRadius="20" Background="#FF161B1E" MaxWidth="1000" MinHeight="360"
+                            Margin="10,12" Padding="16" VerticalAlignment="Top">
                         <Grid>
                             <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                                <RowDefinition Height="*"/>
                             </Grid.RowDefinitions>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*"/>

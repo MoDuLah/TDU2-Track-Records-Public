@@ -37,7 +37,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "The Release verification failed."
 }
 
-$artifactName = "TDU2-Track-Records-Public-v2.5.1-win"
+$artifactName = "TDU2-Track-Records-Public-v2.5.5-win"
 $stageRoot = Join-Path (Join-Path $artifactsRoot ([guid]::NewGuid().ToString("N"))) "TDU2 Track Records Public"
 $zipPath = Join-Path $artifactsRoot ($artifactName + ".zip")
 $releaseFiles = @(
@@ -63,10 +63,13 @@ Compress-Archive -LiteralPath $stageRoot -DestinationPath $zipPath -CompressionL
 $hash = Get-FileHash -Algorithm SHA256 -LiteralPath $zipPath
 $checksumPath = $zipPath + ".sha256"
 Set-Content -LiteralPath $checksumPath -Encoding ascii -NoNewline -Value ($hash.Hash + " *" + (Split-Path -Leaf $zipPath))
+$updateAssets = & (Join-Path $repositoryRoot "write_update_assets.ps1") -PackageFolder $stageRoot `
+    -ArtifactsFolder $artifactsRoot -ArtifactName $artifactName -Files $releaseFiles
 
 [pscustomobject]@{
     PreviewFolder = $stageRoot
     Zip = $zipPath
     Checksum = $checksumPath
     Sha256 = $hash.Hash
+    UpdateAssets = $updateAssets
 }

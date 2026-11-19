@@ -18,6 +18,7 @@
     <Window.Resources>
         <local:ByteArrayToImageSourceConverter x:Key="ByteArrayToImageSourceConverter"/>
     </Window.Resources>
+    <Grid x:Name="NoticeHost">
     <Viewbox x:Name="MainScaleViewbox" Stretch="Uniform" StretchDirection="DownOnly">
     <Border x:Name="MainShellBorder" BorderBrush="{DynamicResource AppShellBorderBrush}"
             BorderThickness="{DynamicResource AppShellBorderThickness}"
@@ -514,9 +515,21 @@
                         <Border Height="252" Margin="2,4" Padding="5" Background="#FF111317"
                                 BorderBrush="#FF333539" BorderThickness="1">
                             <Grid>
-                                <Image x:Name="VehiclePreviewImage"
-                                       Source="{Binding SelectedItem, ElementName=combo_Vehicle, Converter={StaticResource ByteArrayToImageSourceConverter}}"
-                                       Stretch="Uniform" Margin="2" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                <Button x:Name="VehiclePreviewButton" Click="VehiclePreview_Click" ToolTip="Enlarge car photo"
+                                        AutomationProperties.Name="Enlarge car photo">
+                                    <Button.Style>
+                                        <Style TargetType="Button" BasedOn="{StaticResource VehiclePhotoButtonStyle}">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding Source, ElementName=VehiclePreviewImage}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </Button.Style>
+                                    <Image x:Name="VehiclePreviewImage"
+                                           Source="{Binding SelectedItem, ElementName=combo_Vehicle, Converter={StaticResource ByteArrayToImageSourceConverter}}"
+                                           Stretch="Uniform" Margin="2" RenderOptions.BitmapScalingMode="HighQuality"/>
+                                </Button>
                                 <TextBlock Text="SELECT A VEHICLE" Foreground="{DynamicResource AppMutedForegroundBrush}"
                                            FontWeight="Bold" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center">
                                     <TextBlock.Style>
@@ -858,4 +871,5 @@
         </Grid>
     </Border>
     </Viewbox>
+    </Grid>
 </Window>

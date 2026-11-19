@@ -63,8 +63,41 @@
         </Grid.RowDefinitions>
 
 
+        <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,4,20,0" >
+            <Image x:Name="Minimize_Button"  MouseLeftButtonDown="Minimize_MouseLeftButtonDown"
+                   Margin="0,0,5,0"
+                   Width="32" Height="32" MinWidth="32" MinHeight="32"
+                   ToolTip="Minimize Application">
+                <Image.Style>
+                    <Style TargetType="{x:Type Image}">
+                        <Setter Property="Source" Value="Images/ico/navigation/minimize.png"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Source" Value="Images/ico/navigation/minimize_over.png"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Image.Style>
+            </Image>
+            <Image x:Name="Close_Button" MouseLeftButtonDown="Close_Button_MouseLeftButtonDown"
+                   Margin="0,0,5,0"
+                   Width="32" Height="32" MinWidth="32" MinHeight="32"
+                   ToolTip="Close Application">
+                <Image.Style>
+                    <Style TargetType="{x:Type Image}">
+                        <Setter Property="Source" Value="Images/ico/navigation/close.png"/>
+                        <Style.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Source" Value="Images/ico/navigation/close_over.png"/>
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </Image.Style>
+            </Image>
+        </StackPanel>
+
         <!-- Car Details Section -->
-        <Grid Grid.Row="1" Margin="20,20,20,20" Grid.ColumnSpan="2">
+        <Grid Grid.Row="1" Margin="20,0,20,14" Grid.ColumnSpan="2">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
@@ -75,45 +108,19 @@
                 <ColumnDefinition Width="2*"/>
                 <ColumnDefinition Width="1*"/>
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Row="0" Grid.Column="4" Orientation="Horizontal" Panel.ZIndex="3" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-15,-17,0" >
-                <Image x:Name="Minimize_Button"  MouseLeftButtonDown="Minimize_MouseLeftButtonDown"
-                       Margin="0,0,5,0"
-                       Width="32" Height="32" MinWidth="32" MinHeight="32"
-                       ToolTip="Minimize Application">
-                    <Image.Style>
-                        <Style TargetType="{x:Type Image}">
-                            <Setter Property="Source" Value="Images/ico/navigation/minimize.png"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Source" Value="Images/ico/navigation/minimize_over.png"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Image.Style>
-                </Image>
-                <Image x:Name="Close_Button" MouseLeftButtonDown="Close_Button_MouseLeftButtonDown"
-                       Margin="0,0,5,0"
-                       Width="32" Height="32" MinWidth="32" MinHeight="32"
-                       ToolTip="Close Application">
-                    <Image.Style>
-                        <Style TargetType="{x:Type Image}">
-                            <Setter Property="Source" Value="Images/ico/navigation/close.png"/>
-                            <Style.Triggers>
-                                <Trigger Property="IsMouseOver" Value="True">
-                                    <Setter Property="Source" Value="Images/ico/navigation/close_over.png"/>
-                                </Trigger>
-                            </Style.Triggers>
-                        </Style>
-                    </Image.Style>
-                </Image>
-            </StackPanel>
             <!-- Car Header -->
-            <Border Grid.Row="0" Grid.ColumnSpan="2" Background="{DynamicResource AppSectionBodyBrush}"
-                    BorderBrush="{DynamicResource AppSectionBorderBrush}" BorderThickness="1" Margin="5" Padding="5">
-                <Grid>
-                    <Grid.Background>
-                        <ImageBrush x:Name="VehicleImage" ImageSource="{Binding VehicleImage}" Stretch="UniformToFill" TileMode="None" AlignmentX="Center" AlignmentY="Center"/>
-                    </Grid.Background>
+            <Border Grid.Row="0" Grid.ColumnSpan="2" Height="270" Background="{DynamicResource AppSectionBodyBrush}"
+                    BorderBrush="{DynamicResource AppSectionBorderBrush}" BorderThickness="1" Margin="5">
+                <Grid ClipToBounds="True">
+                    <Button Click="VehiclePhoto_Click" Style="{DynamicResource VehiclePhotoButtonStyle}"
+                            ToolTip="Enlarge car photo" AutomationProperties.Name="Enlarge car photo">
+                        <Border RenderOptions.BitmapScalingMode="HighQuality">
+                            <Border.Background>
+                                <ImageBrush x:Name="VehicleHeaderPhoto" Stretch="UniformToFill" AlignmentX="Center"
+                                            AlignmentY="Center" ImageSource="{Binding VehicleImage, Converter={StaticResource ByteArrayToImageSourceConverter}}"/>
+                            </Border.Background>
+                        </Border>
+                    </Button>
                     <StackPanel HorizontalAlignment="Right">
                         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
                         <TextBlock x:Name="VehicleNameTextBlock" Foreground="#fff" FontSize="20" Padding="20" FontWeight="Bold" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="5">
@@ -126,16 +133,25 @@
                             <Run Text="{Binding VehicleName}"/>
                         </TextBlock>
                         <Image x:Name="VehiclerClass" Margin="5"/>
-                        <Image x:Name="VehiclerLevel" Margin="5" Cursor="Hand"
+                        <Image x:Name="VehiclerLevel" Margin="5" Width="42" Height="42" Cursor="Hand"
+                               ToolTip="Preview upgrade stage. Left-click to increase or right-click to decrease."
                                MouseLeftButtonDown="VehiclerLevel_MouseLeftButtonDown"
                                MouseRightButtonDown="VehiclerLevel_MouseRightButtonDown"/>
                         </StackPanel>
+                        <Path x:Name="UpgradeStageArrow" HorizontalAlignment="Right" Width="18" Height="18"
+                              Margin="0,-1,17,0" Data="M9,16 L9,3 M3,9 L9,3 15,9" Stroke="#FFFFB4AA"
+                              StrokeThickness="2.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                              StrokeLineJoin="Round" IsHitTestVisible="False">
+                            <Path.Effect>
+                                <DropShadowEffect Color="Black" BlurRadius="3" ShadowDepth="1"/>
+                            </Path.Effect>
+                        </Path>
                         <Border HorizontalAlignment="Right" Margin="5,0,5,5" Padding="8,4"
                                 Background="#E60C0E12" BorderBrush="#FF3B3E45" BorderThickness="1">
                             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
                                 <TextBlock x:Name="UpgradeBreakdownText" Foreground="#FFFFB4AA" FontSize="12"
                                            FontWeight="Bold" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                                <StackPanel Orientation="Horizontal" ToolTip="Left-click the tune indicator to preview the next upgrade stage">
+                                <StackPanel x:Name="UpgradeIncreaseHint" Orientation="Horizontal" ToolTip="Left-click the tune indicator to preview the next upgrade stage">
                                     <Viewbox Width="18" Height="24" Margin="0,0,4,0">
                                         <Canvas Width="24" Height="30">
                                             <Path Data="M12,1 C6,1 2,5 2,11 L2,19 C2,25 6,29 12,29 C18,29 22,25 22,19 L22,11 C22,5 18,1 12,1 Z"
@@ -146,7 +162,7 @@
                                     </Viewbox>
                                     <TextBlock Text="LEFT +1" Foreground="#FFF2F2F4" FontSize="11" VerticalAlignment="Center" Margin="0,0,10,0"/>
                                 </StackPanel>
-                                <StackPanel Orientation="Horizontal" ToolTip="Right-click the tune indicator to preview the previous upgrade stage">
+                                <StackPanel x:Name="UpgradeDecreaseHint" Orientation="Horizontal" ToolTip="Right-click the tune indicator to preview the previous upgrade stage">
                                     <Viewbox Width="18" Height="24" Margin="0,0,4,0">
                                         <Canvas Width="24" Height="30">
                                             <Path Data="M12,1 C6,1 2,5 2,11 L2,19 C2,25 6,29 12,29 C18,29 22,25 22,19 L22,11 C22,5 18,1 12,1 Z"

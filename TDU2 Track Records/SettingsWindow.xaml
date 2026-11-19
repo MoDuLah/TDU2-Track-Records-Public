@@ -23,6 +23,7 @@
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <GroupBox Header="Save Profile" Style="{DynamicResource AppLabeledGroupBoxStyle}" VerticalAlignment="Top">
@@ -88,6 +89,31 @@
                                 TickFrequency="0.05" TickPlacement="Both" AutomationProperties.Name="Carbon background opacity"
                                 Value="{Binding Source={x:Static p:Settings.Default}, Path=BGOpacity, Mode=TwoWay}"/>
                     </DockPanel>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Application Updates" Grid.Row="2" Style="{DynamicResource AppLabeledGroupBoxStyle}" VerticalAlignment="Top">
+                <StackPanel Margin="5">
+                    <TextBlock x:Name="UpdateStatus" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <WrapPanel>
+                        <Button x:Name="CheckUpdateButton" Content="Check for updates" Click="CheckUpdate_Click"/>
+                        <Button x:Name="DownloadUpdateButton" Content="Download update" Click="DownloadUpdate_Click" IsEnabled="False"/>
+                        <Button Content="GitHub releases" Click="OpenReleases_Click"/>
+                        <Button x:Name="OpenUpdateButton" Content="Open download folder" Click="OpenUpdateFolder_Click" Visibility="Collapsed"/>
+                    </WrapPanel>
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Header="Database Maintenance" Grid.Row="2" Grid.Column="2"
+                      Style="{DynamicResource AppLabeledGroupBoxStyle}" VerticalAlignment="Top">
+                <StackPanel Margin="5">
+                    <WrapPanel x:Name="DatabaseActions">
+                        <Button Content="Check database" Click="CheckDatabase_Click"/>
+                        <Button Content="Back up database" Click="BackUpDatabase_Click"/>
+                        <Button Content="Optimise database" Click="OptimiseDatabase_Click"
+                                ToolTip="Create a backup and update SQLite query planner statistics"/>
+                        <Button Content="Open backups" Click="OpenDatabaseBackups_Click"/>
+                    </WrapPanel>
+                    <TextBlock x:Name="DatabaseStatus" TextWrapping="Wrap" Margin="0,6,0,0"
+                               Visibility="Collapsed"/>
                 </StackPanel>
             </GroupBox>
         </Grid>

@@ -14,18 +14,22 @@ namespace TDU2_Track_Records
         private static readonly ConditionalWeakTable<Window, AppNotice> Hosts =
             new ConditionalWeakTable<Window, AppNotice>();
         private static readonly Brush Accent = new SolidColorBrush(Color.FromRgb(229, 37, 33));
-        private readonly Grid root = new Grid();
+        private readonly Grid root;
         private readonly FrameworkElement content;
         private readonly DispatcherTimer timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(7) };
         private Border notification;
         private TaskCompletionSource<bool> confirmation;
 
-        private AppNotice(Window window)
+        private AppNotice(Window window, Grid host = null, FrameworkElement hostContent = null)
         {
-            content = (FrameworkElement)window.Content;
-            window.Content = null;
-            root.Children.Add(content);
-            window.Content = root;
+            root = host ?? new Grid();
+            content = hostContent ?? (FrameworkElement)window.Content;
+            if (host == null)
+            {
+                window.Content = null;
+                root.Children.Add(content);
+                window.Content = root;
+            }
             timer.Tick += (sender, e) => ClearNotification();
             window.Closed += (sender, e) =>
             {
@@ -40,6 +44,11 @@ namespace TDU2_Track_Records
                     e.Handled = true;
                 }
             };
+        }
+
+        internal static void Attach(Window window, Grid host, FrameworkElement content)
+        {
+            Hosts.GetValue(window, owner => new AppNotice(owner, host, content));
         }
 
         public static void Show(Window source, string message, string title = null, bool persistent = false)

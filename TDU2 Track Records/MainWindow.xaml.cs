@@ -36,8 +36,6 @@ namespace TDU2_Track_Records
         private string distance => Settings.Default.distance;
         private string speed => Settings.Default.speed;
         private string SI => Settings.Default.system;
-        // Dictionary to store last positions for different windows
-        private Dictionary<string, (double Left, double Top)> lastWindowPositions = new Dictionary<string, (double Left, double Top)>();
         private static readonly Regex _regex = new Regex("[^0-9.-]+"); //regex that matches disallowed text
         private const double onemile = MeasurementUnits.MilesPerKilometer;
         private double _trackLengthKm;
@@ -121,6 +119,7 @@ namespace TDU2_Track_Records
         private bool _isRefreshingEventTypes;
         private bool _vehicleTooltipGeneratorHooked;
         private readonly Dictionary<string, EmbeddedViewState> _embeddedViews = new Dictionary<string, EmbeddedViewState>();
+        private powerlap _powerLapsView;
         private string _activeEmbeddedViewIdentifier;
         private Border _activeNavigationButton;
 
@@ -134,6 +133,7 @@ namespace TDU2_Track_Records
         {
 
             InitializeComponent();
+            AppNotice.Attach(this, NoticeHost, MainScaleViewbox);
             InitializeHudLayout();
             InitializeSaveProfiles();
             Loaded += MainWindow_Loaded;
@@ -269,7 +269,7 @@ namespace TDU2_Track_Records
         private void MainWindow_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             if (_isWorkAreaMaximized)
-                ApplyResponsiveWindowLayout(true);
+                ApplyResponsiveWindowLayout(true, e.NewSize);
             UpdateHudStatus();
         }
 
@@ -308,11 +308,11 @@ namespace TDU2_Track_Records
                 : Brushes.Transparent;
 
             // Preserve responsive layout behaviour.
-            ApplyResponsiveWindowLayout(isMaximized);
+            ApplyResponsiveWindowLayout(isMaximized, RenderSize);
         }
 
 
-        private void ApplyResponsiveWindowLayout(bool isMaximized)
+        private void ApplyResponsiveWindowLayout(bool isMaximized, Size viewport)
         {
             if (MainShellBorder == null || EventLayoutColumn == null ||
                 VehicleLayoutColumn == null || RaceLayoutColumn == null ||
@@ -321,8 +321,9 @@ namespace TDU2_Track_Records
 
             if (isMaximized)
             {
-                MainShellBorder.Width = Math.Max(0, ActualWidth);
-                MainShellBorder.Height = Math.Max(0, ActualHeight);
+                double scale = Math.Max(1, Math.Min(1.8, Math.Min(viewport.Width / 1600, viewport.Height / 900)));
+                MainShellBorder.Width = viewport.Width / scale;
+                MainShellBorder.Height = viewport.Height / scale;
                 EventLayoutColumn.Width = new GridLength(350, GridUnitType.Star);
                 VehicleLayoutColumn.Width = new GridLength(470, GridUnitType.Star);
                 RaceLayoutColumn.Width = new GridLength(390, GridUnitType.Star);
@@ -2089,6 +2090,7 @@ namespace TDU2_Track_Records
         }
         private void Btn_TrackInfo_Click(object sender, MouseButtonEventArgs e)
         {
+            e.Handled = true;
             if (combo_Track.SelectedIndex == -1)
             {
                 AppNotice.Show(this, "No Track Selected", "Error");
@@ -2180,6 +2182,13 @@ namespace TDU2_Track_Records
                 }
             }
         }
+
+        private void VehiclePreview_Click(object sender, RoutedEventArgs e)
+        {
+            if (combo_Vehicle.SelectedItem is DataRowView vehicle)
+                VehicleImagePreview.Show(this, VehiclePreviewImage.Source, vehicle["_vehicle_name"].ToString());
+        }
+
         private void cb_conditions_StateChanged(object sender, RoutedEventArgs e)
         {
             if (cb_conditions.IsChecked == false)
@@ -2391,6 +2400,11 @@ namespace TDU2_Track_Records
                 _embeddedViews[windowIdentifier] = state;
             }
 
+            ShowEmbeddedView(windowIdentifier, navigationButton, state.Container);
+        }
+
+        private void ShowEmbeddedView(string windowIdentifier, Border navigationButton, FrameworkElement content)
+        {
             if (string.Equals(_activeEmbeddedViewIdentifier, "EventWindow", StringComparison.Ordinal) &&
                 !string.Equals(windowIdentifier, "EventWindow", StringComparison.Ordinal))
             {
@@ -2400,7 +2414,7 @@ namespace TDU2_Track_Records
             EventGroupBox.Visibility = Visibility.Collapsed;
             VehicleGroupBox.Visibility = Visibility.Collapsed;
             RaceDataGroupBox.Visibility = Visibility.Collapsed;
-            EmbeddedContentHost.Content = state.Container;
+            EmbeddedContentHost.Content = content;
             EmbeddedContentSurface.Visibility = Visibility.Visible;
             _activeEmbeddedViewIdentifier = windowIdentifier;
             SetActiveNavigation(navigationButton);
@@ -2617,100 +2631,12 @@ namespace TDU2_Track_Records
                 Application.Current.Shutdown();
         }
 
-        private void OpenChildWindow<T>(string windowIdentifier) where T : Window, new()
-        {
-            var childWindow = new T();
-            childWindow.Owner = this;
-
-            // Get the screen dimensions
-            var screenWidth = SystemParameters.PrimaryScreenWidth;
-            var screenHeight = SystemParameters.PrimaryScreenHeight;
-
-            double targetLeft, targetTop;
-
-            // Check if the window has a remembered position
-            if (lastWindowPositions.ContainsKey(windowIdentifier))
-            {
-                // Restore the remembered position
-                (targetLeft, targetTop) = lastWindowPositions[windowIdentifier];
-            }
-            else
-            {
-                // Determine position based on windowIdentifier
-                if (windowIdentifier == "SettingsWindow")
-                {
-                    // Position settings to the right of the main window.
-                    targetLeft = this.Left + this.Width + 10; // Right of the main window
-                    targetTop = this.Top + (this.Height - childWindow.Height) / 2; // Vertically centered with respect to the main window
-                }
-                else if (windowIdentifier == "EventWindow")
-                {
-                    // The Add Event dialog is a full form, so center it over the main window.
-                    targetLeft = this.Left + (this.ActualWidth - childWindow.Width) / 2;
-                    targetTop = this.Top + (this.ActualHeight - childWindow.Height) / 2;
-                }
-                else
-                {
-                    // Center the child window for other windows
-                    targetLeft = (screenWidth - childWindow.Width) / 2;
-                    targetTop = (screenHeight - childWindow.Height) / 2;
-                }
-            }
-
-            // Adjust the position to ensure it's within screen bounds
-            if (targetLeft + childWindow.Width > screenWidth)
-            {
-                targetLeft = screenWidth - childWindow.Width; // Prevent going off-screen to the right
-            }
-            if (targetLeft < 0)
-            {
-                targetLeft = 0; // Prevent going off-screen to the left
-            }
-            if (targetTop + childWindow.Height > screenHeight)
-            {
-                targetTop = screenHeight - childWindow.Height; // Prevent going off-screen down
-            }
-            if (targetTop < 0)
-            {
-                targetTop = 0; // Prevent going off-screen up
-            }
-
-            // Set the window position
-            childWindow.Left = targetLeft;
-            childWindow.Top = targetTop;
-
-            // Subscribe to the closed event to remember the position
-            childWindow.Closed += (sender, e) => ChildWindow_Closed(sender, windowIdentifier);
-
-            // Show the child window
-            if (windowIdentifier == "PowerLapBoard")
-            {
-                childWindow.Show();
-                childWindow.Activate();
-                childWindow.Focus();
-            }
-            else
-            {
-                childWindow.ShowDialog();
-            }
-        }
-
-
-        private void ChildWindow_Closed(object sender, string windowIdentifier)
-        {
-            if (sender is Window childWindow)
-            {
-                lastWindowPositions[windowIdentifier] = (childWindow.Left, childWindow.Top);
-            }
-
-            // Additional logic when the window is closed, if needed
-            if (windowIdentifier == "EventWindow") {
-            RefreshRaceTypeComboBox();
-            }
-        }
         private void PowerLaps_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)
         {
-            OpenChildWindow<powerlap>("PowerLapBoard");
+            e.Handled = true;
+            if (_powerLapsView == null)
+                _powerLapsView = new powerlap();
+            ShowEmbeddedView("PowerLapBoard", PowerLapsNavButton, _powerLapsView);
         }
 
         private void Events_MouseLeftButtonDown(object sender, MouseButtonEventArgs e)

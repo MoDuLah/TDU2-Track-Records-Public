@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -16,6 +18,8 @@ namespace TDU2_Track_Records
         private readonly string connectionString = Settings.Default.connectionString;
         private bool _profileSelectionChanging;
         private bool _profileSyncInProgress;
+        private GitHubRelease availableRelease;
+        private string updateFolder;
 
         public SettingsWindow()
         {
@@ -23,6 +27,132 @@ namespace TDU2_Track_Records
             LoadSettings();
             LoadSaveProfiles();
             UnitSlider.ValueChanged += UnitSlider_ValueChanged;
+            UpdateStatus.Text = $"Installed version {GitHubUpdates.DescribeVersion(GitHubUpdates.InstalledVersion)}";
+        }
+
+        private async void CheckUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            CheckUpdateButton.IsEnabled = DownloadUpdateButton.IsEnabled = false;
+            availableRelease = null;
+            UpdateStatus.Text = "Checking GitHub…";
+            try
+            {
+                GitHubRelease release = await GitHubUpdates.CheckAsync();
+                Version installed = GitHubUpdates.InstalledVersion;
+                Version latest = release.Version;
+                string installedText = GitHubUpdates.DescribeVersion(installed);
+                string latestText = GitHubUpdates.DescribeVersion(latest);
+                if (latest > installed)
+                {
+                    availableRelease = release;
+                    UpdateStatus.Text = $"Version {latestText} is available. Installed version {installedText}.";
+                }
+                else
+                {
+                    UpdateStatus.Text = latest == installed
+                        ? $"Version {installedText} is up to date."
+                        : $"Installed version {installedText} is newer than GitHub's published version {latestText}.";
+                }
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus.Text = "Update check failed. " + ex.Message;
+            }
+            finally
+            {
+                CheckUpdateButton.IsEnabled = true;
+                DownloadUpdateButton.IsEnabled = availableRelease != null;
+            }
+        }
+
+        private async void DownloadUpdate_Click(object sender, RoutedEventArgs e)
+        {
+            if (availableRelease == null)
+                return;
+            CheckUpdateButton.IsEnabled = DownloadUpdateButton.IsEnabled = false;
+            UpdateStatus.Text = "Downloading and verifying the update…";
+            try
+            {
+                string database = DatabaseMaintenance.ResolvePath(connectionString);
+                DownloadedUpdate update = await Task.Run(() => GitHubUpdates.DownloadAsync(availableRelease, database));
+                updateFolder = update.Folder;
+                OpenUpdateButton.Visibility = Visibility.Visible;
+                UpdateStatus.Text = update.Message + "\nOpen the download folder to review the staged update.";
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus.Text = "Update download failed. " + ex.Message;
+            }
+            finally
+            {
+                CheckUpdateButton.IsEnabled = DownloadUpdateButton.IsEnabled = true;
+            }
+        }
+
+        private void OpenReleases_Click(object sender, RoutedEventArgs e) => OpenInShell(GitHubUpdates.ReleasesPage);
+
+        private void OpenUpdateFolder_Click(object sender, RoutedEventArgs e) => OpenInShell(updateFolder);
+
+        private async void CheckDatabase_Click(object sender, RoutedEventArgs e)
+        {
+            string seed = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "database.seed.db");
+            await RunDatabaseTask(path => DatabaseMaintenance.Check(path, seed));
+        }
+
+        private async void BackUpDatabase_Click(object sender, RoutedEventArgs e)
+        {
+            await RunDatabaseTask(path => "Verified backup created.\n" + DatabaseMaintenance.CreateBackup(path));
+        }
+
+        private async void OptimiseDatabase_Click(object sender, RoutedEventArgs e)
+        {
+            await RunDatabaseTask(path => "SQLite optimisation complete. Verified backup:\n" + DatabaseMaintenance.Optimize(path));
+        }
+
+        private void OpenDatabaseBackups_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                string folder = Path.Combine(Path.GetDirectoryName(DatabaseMaintenance.ResolvePath(connectionString)), "backups");
+                Directory.CreateDirectory(folder);
+                OpenInShell(folder);
+            }
+            catch (Exception ex)
+            {
+                AppNotice.Show(this, ex.Message, "Could not open backups");
+            }
+        }
+
+        private async Task RunDatabaseTask(Func<string, string> operation)
+        {
+            DatabaseActions.IsEnabled = false;
+            DatabaseStatus.Visibility = Visibility.Visible;
+            DatabaseStatus.Text = "Working on the database…";
+            try
+            {
+                string path = DatabaseMaintenance.ResolvePath(connectionString);
+                DatabaseStatus.Text = await Task.Run(() => operation(path));
+            }
+            catch (Exception ex)
+            {
+                DatabaseStatus.Text = "Database operation failed. " + ex.Message;
+            }
+            finally
+            {
+                DatabaseActions.IsEnabled = true;
+            }
+        }
+
+        private void OpenInShell(string target)
+        {
+            try
+            {
+                Process.Start(new ProcessStartInfo(target) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                AppNotice.Show(this, ex.Message, "Could not open location");
+            }
         }
 
         private void LoadSettings()
